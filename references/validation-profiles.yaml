@@ -1,0 +1,50 @@
+# Профили валидации (main.md §4, §23; PLAN.md D3).
+# Используется validator.py (фаза 5) и cli.py build; согласуется с schemas/sherpa-rules.sch (dev-слой).
+
+designer_version: "1.4.4"
+
+profiles:
+
+  draft:
+    purpose: быстрое прототипирование, сохранение полноты графа
+    allows_todo: true
+    blocks_on:
+      - FATAL        # структурный развал (SHP-DOC-*, SHP-ID-*)
+      - ERROR         # нарушенные инварианты (SEM-*)
+    warns_only:
+      - unresolved_external_variable
+      - while_body_no_state_change
+      - layout_off_grid
+
+  release:
+    purpose: только подтверждённые и валидные конструкции; файл готов для Designer
+    allows_todo: false
+    blocks_on:
+      - FATAL
+      - ERROR
+      - WARN_DETERMINISM
+    forbidden:
+      - unresolved_todo                  # SHP-TODO-*: ToDo в release запрещён
+      - empty_while_condition            # подтверждённая оболочка, но поведение не гарантировано
+      - unconfirmed_collection_block     # Hashtable*-блоки без golden (см. tests GOLDEN_MISSING)
+      - unknown_block_version            # версия блока вне confirmed_versions каталога
+      - implicit_truthiness              # условие не-Logical без явного сравнения (strict-подобное)
+      - variable_undeclared              # ссылки только на объявленные/external переменные
+
+  strict:
+    purpose: release + типовая строгость выражений
+    inherits: release
+    forbidden:
+      - untyped_expression_in_condition  # условие должно быть compare/logical/variable_reference(Logical)
+      - ambiguous_type_coercion          # Number->Text и т.п. без явного подтверждения
+      - freeform_powershell              # kind=powershell запрещён; только типизированные выражения
+
+severity:
+  FATAL: документ не может быть проверен дальше; выпуск запрещён
+  ERROR: нарушен инвариант процесса; выпуск запрещён
+  WARN: допустимо, но подозрительно; в release блокирует (кроме warns_only draft)
+
+# Объединение отчётов (D3): release-профиль склеивает Python-валидатор (SEM-*) и SVRL (SHP-*) в один JSON.
+report_format:
+  fields: [code, severity, location, message]
+  sources: [python, svrl]

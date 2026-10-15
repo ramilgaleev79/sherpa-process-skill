@@ -1,0 +1,53 @@
+meta:
+  designer_version: 1.4.4
+  generated_from: golden/real/*.process
+variable_types:
+  DataTable:
+    observed_in:
+    - b10-datatable-ops.process
+    - b11-datatables-x3.process
+    - b16-datatable-expanded.process
+    - diag11-log174-datatable.process
+    - main-rich.process
+    runtime: System.Data.DataTable (xs:schema + DiffGram, references/datatable-serialization.md)
+  Dictionary:
+    observed_in:
+    - b07-collections-filled.process
+    - diag07-hashtable-dict-vars.process
+    runtime: System.Collections.Generic.Dictionary`2[[System.Object],[System.Object]]
+  Hashtable:
+    observed_in:
+    - b07-collections-filled.process
+    - diag07-hashtable-dict-vars.process
+    runtime: System.Collections.Hashtable (BinaryFormatter-контейнер)
+  List:
+    observed_in:
+    - b09-list-ops.process
+    runtime: System.Collections.Generic.List`1[[System.String]]
+  Logical:
+    observed_in:
+    - b12-if-variable.process
+    - b14-while-todo-graph.process
+    - b18-while-filled.process
+    - b19-trycatch-abort.process
+    - b20-container-abort.process
+    - diag03-assign-4vars.process
+    - diag14-while-empty.process
+    - main-rich.process
+    runtime: System.Boolean (True/False; $True/$False в выражениях)
+  Number:
+    observed_in:
+    - b17-invoke-expression.process
+    - diag03-assign-4vars.process
+    runtime: System.Double/Int (плоская строка в декларации)
+  SecureString:
+    observed_in:
+    - b04-securestring-ops.process
+    - diag03-assign-4vars.process
+    runtime: System.Security.SecureString (пустая строка в декларации)
+  Text:
+    observed_in:
+    - b05-text-variants.process
+    - diag03-assign-4vars.process
+    - main-rich.process
+    runtime: бинарный контейнер Base64 (см. references/text-serialization.md)
