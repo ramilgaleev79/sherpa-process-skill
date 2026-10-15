@@ -2,8 +2,10 @@
 """CLI скила sherpa-process.
 
 Команды:
-    init-ir FILE     — записать шаблонный IR (пример всех подтверждённых узлов)
-    validate-ir FILE — проверить IR против закрытого контракта ir.py
+    init-ir FILE         — записать шаблонный IR (пример всех подтверждённых узлов)
+    validate-ir FILE     — проверить IR против закрытого контракта ir.py
+    build IR OUT [--mode draft|release|strict]
+                         — скомпилировать .process (детерминированно)
 """
 
 from __future__ import annotations
@@ -14,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from sherpa_xml import ir  # noqa: E402
+from sherpa_xml import compiler, ir  # noqa: E402
 
 TEMPLATE = {
     "process": {"name": "Example Process", "mode": "draft"},
@@ -75,6 +77,23 @@ def cmd_validate_ir(path: Path) -> int:
     return 0
 
 
+def cmd_build(ir_path: Path, out_path: Path, mode: str) -> int:
+    try:
+        parsed = ir.ProcessIR.parse(ir_path.read_text(encoding="utf-8"))
+        parsed["process"]["mode"] = mode
+        comp = compiler.Compiler()
+        result = comp.compile(parsed)
+        if comp.compile(parsed) != result:  # детерминизм: байт-в-байт
+            print("FAIL: компиляция недетерминирована")
+            return 1
+        out_path.write_bytes(b"\xef\xbb\xbf" + result.encode("utf-8"))
+        print(f"OK: {out_path} ({len(result.encode('utf-8'))} байт, mode={mode})")
+        return 0
+    except (ir.IRError, compiler.CompileError) as exc:
+        print(f"FAIL: {exc}")
+        return 1
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -82,9 +101,15 @@ def main() -> int:
     p_init.add_argument("file", type=Path)
     p_val = sub.add_parser("validate-ir", help="проверить IR")
     p_val.add_argument("file", type=Path)
+    p_build = sub.add_parser("build", help="скомпилировать .process")
+    p_build.add_argument("ir_file", type=Path)
+    p_build.add_argument("out_file", type=Path)
+    p_build.add_argument("--mode", choices=["draft", "release", "strict"], default="draft")
     args = ap.parse_args()
     if args.cmd == "init-ir":
         return cmd_init_ir(args.file)
+    if args.cmd == "build":
+        return cmd_build(args.ir_file, args.out_file, args.mode)
     return cmd_validate_ir(args.file)
 
 

@@ -30,6 +30,10 @@ EXPRESSION_KINDS = frozenset(
         "powershell",
         "secure_encode",
         "secure_decode",
+        # литералы начальных значений коллекций (writer'ы фазы 3, golden-подтверждены)
+        "list_literal",
+        "hashtable_literal",
+        "data_table_literal",
     }
 )
 
@@ -176,6 +180,19 @@ class Expr(dict):
                 raise IRError(f"{kind}: нужны left и right")
         if kind in ("secure_encode", "secure_decode") and "left" not in self:
             raise IRError(f"{kind}: аргумент в 'left'")
+        if kind == "list_literal":
+            if not isinstance(self.get("value"), list) or not all(isinstance(x, str) for x in self["value"]):
+                raise IRError("list_literal: value должен быть списком строк (List<String>)")
+        if kind == "hashtable_literal":
+            v = self.get("value")
+            if not isinstance(v, list) or not all(
+                isinstance(p, list) and len(p) == 2 and all(isinstance(x, str) for x in p) for p in v
+            ):
+                raise IRError("hashtable_literal: value = список пар [ключ, значение] строк")
+        if kind == "data_table_literal":
+            v = self.get("value")
+            if not isinstance(v, dict) or "columns" not in v or "rows" not in v:
+                raise IRError("data_table_literal: value = {columns: [[имя, тип],…], rows: [{колонка: значение},…]}")
 
         for side in ("left", "right"):
             if side in self and not isinstance(self[side], Expr):
