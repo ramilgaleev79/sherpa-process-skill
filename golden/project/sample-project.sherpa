@@ -1,0 +1,96 @@
+﻿{
+  "Version": "1.00",
+  "IsDarkTheme": false,
+  "ProductVersion": "1.4.4.40162",
+  "References": {
+    "Items": [
+      "Microsoft.CSharp",
+      "System",
+      "System.Core",
+      "System.Data",
+      "System.Data.DataSetExtensions",
+      "System.Deployment",
+      "System.IO",
+      "System.Linq",
+      "System.Net.Http",
+      "System.Text.Encoding",
+      "System.Web",
+      "System.Windows.Forms",
+      "System.Xml"
+    ]
+  },
+  "Properties": {
+    "RobotName": "",
+    "RobotVersion": "",
+    "Description": "",
+    "AllowedRunWithoutConfirm": false,
+    "DisableVisibleInParams": false,
+    "DisableVisibleOutParams": false,
+    "TotalBlockExecutionDelay": 0,
+    "InParams": [],
+    "OutParams": [],
+    "Settings": [],
+    "PythonModules": "",
+    "ModelAutoDesigner": "",
+    "ModelAIServer": ""
+  },
+  "Folders": [
+    {
+      "RelativePath": "",
+      "Folders": [],
+      "Files": [
+        {
+          "RelativePath": "диаграмма 1.process",
+          "Main": true,
+          "Showing": false,
+          "Pinned": false
+        },
+        {
+          "RelativePath": "диаграмма 15.process",
+          "Main": false,
+          "Showing": false,
+          "Pinned": false
+        },
+        {
+          "RelativePath": "диаграмма 17.process",
+          "Main": false,
+          "Showing": false,
+          "Pinned": false
+        },
+        {
+          "RelativePath": "диаграмма 18.process",
+          "Main": false,
+          "Showing": true,
+          "Pinned": false
+        },
+        {
+          "RelativePath": "диаграмма 19.process",
+          "Main": false,
+          "Showing": true,
+          "Pinned": false
+        },
+        {
+          "RelativePath": "диаграмма 2.process",
+          "Main": false,
+          "Showing": false,
+          "Pinned": false
+        },
+        {
+          "RelativePath": "диаграмма 20.process",
+          "Main": false,
+          "Showing": true,
+          "Pinned": false
+        },
+        {
+          "RelativePath": "диаграмма 3.process",
+          "Main": false,
+          "Showing": false,
+          "Pinned": false
+        }
+      ],
+      "Links": []
+    }
+  ],
+  "Files": [],
+  "Links": []
+}

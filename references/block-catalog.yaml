@@ -1338,6 +1338,7 @@ blocks:
       width: '100'
     display_name: Пауза
     golden_files:
+    - b21-delay.process
     - business-error.process
     - main-rich.process
     - system-error.process
@@ -3901,6 +3902,7 @@ blocks:
     - b18-while-filled.process
     - b19-trycatch-abort.process
     - b20-container-abort.process
+    - b21-delay.process
     - business-error.process
     - diag01-start-stop.process
     - diag02-start-todo-stop.process
@@ -4466,6 +4468,7 @@ blocks:
     - b18-while-filled.process
     - b19-trycatch-abort.process
     - b20-container-abort.process
+    - b21-delay.process
     - business-error.process
     - diag01-start-stop.process
     - diag02-start-todo-stop.process
