@@ -1,0 +1,59 @@
+# Манифест golden-эталонов (реальные файлы, серия real/)
+
+Источник: рабочий проект «Выгрузка данных из бюджетной системы» (Sherpa RPA Designer).
+Точная версия Designer: **уточнить у пользователя** — не зафиксирована.
+Имена файлов нормализованы; оригиналы лежат в исходной папке проекта.
+
+Общее для всех файлов (подтверждено):
+
+- Корень `Root`; секции в порядке: `DesignerItems`, `Connections`, `Properties`, `PSCache`, `Description`, `InputArguments`, `OutputArguments`.
+- Файл: UTF-8 с BOM, XML declaration `<?xml version="1.0" encoding="utf-8"?>`.
+- Блок = `DesignerItem` с полями в порядке: `Left, Top, Width, Height, ID (GUID), zIndex, IsGroup, IsEnabled, Description, IsPSVerified, ParentID, StorageSelectors, Content`.
+- `Content` — экранированный XAML `ToolboxItemSettings` (namespace `{clr-namespace:ToolboxDesigner.Core;assembly=DiagramDesigner}`): атрибуты шаблона + `PathStyle`/`PathStyle_DragThumb` (XAML-визуал) + `Properties` (`PropertiesCollection` → `Property`: Name, Tooltip, CatalogName, Type, Value, Visible, DefaultValue, ValueType, EnumVariants, Caption, ProtoName, ReadOnly, IsRequired, IsPSVerified) + `ConnectorsSettings` (`ConnectorsSettingsCollection` → `ConnectorSettings`: Name, Orientation, RelativePosition, MaxInConnections, MaxOutConnections, Color, Caption).
+- Ребро графа = `Connections/Connection` с полями: `SourceID, SinkID, SourceConnectorName, SinkConnectorName, SourceArrowSymbol, SinkArrowSymbol, zIndex`.
+- У каждого блока 4 общих свойства Error processing: `ErrorLevel` (Enum Default;Ignore;Handle), `ErrorDirection` (Enum Default;Right;Bottom), `ReportLevel` (Enum Default;Release;Debug;Detailed;Output), `ErrorMessage` (Variable, `$ErrorMessage`).
+- Статического Error-коннектора нет ни у While, ни у IfCondition (в этой версии).
+
+## Файлы
+
+| Файл | Блоки (InternalName v Version) | Что подтверждает |
+|------|-------------------------------|------------------|
+| `diag01-start-stop.process` | Start v10, ReturnOrStop v113 | Минимальный граф; шаблоны Start/ReturnOrStop; `ReturnOrStop` — реальное имя Stop-блока |
+| `diag02-start-todo-stop.process` | + ToDoBlock v10 | ToDo-шаблон (версия 10), pass-through Next |
+| `diag03-assign-4vars.process` | + Assign v166 ×4 | Assign v166; переменные Number('0'), Logical('True'), Text(контейнер), SecureString('') |
+| `diag07-hashtable-dict-vars.process` | Start, ReturnOrStop | Начальные значения Hashtable и Dictionary (контейнеры) |
+| `diag14-while-empty.process` | + While v32 | While v32: порты Input/Iteration/InputLeft/Next; Condition с пустым Value (заполненное условие НЕ подтверждено) |
+| `diag11-log174-datatable.process` | Log v174, Start, ReturnOrStop | Log v174 (другая версия, чем v165!); DataTable-переменная table1 |
+| `init-ifcondition.process` | Start, OpenFileDialog v46, InvokeExpression v71, LoadDataTable v115, IfCondition v46, Assign v166, ReturnOrStop | **IfCondition v46** (не IfElse!): заполненное условие `Test-Connection ... -Quiet`, ValueType='Any Expression'; порты Yes(Bottom)/No(Right) |
+| `main-rich.process` | For v49, ForeachHashtable v41, ForeachList v45, TryCatchContainer v97, ProcessContainer v124, CollapseContainer v11, Comment v21, RestClient v35, DatabaseCreateConnection v82, DatabaseInsertDataTable v32, LoadDataTable v115, AddRow v25, SplitString v92, FromJson v11, InvokeExpression v71, IfCondition v46, Delay v71, Log v165, FullAbort v30, Start, ReturnOrStop | Богатая библиотека шаблонов для будущих каталогов; непустая Text-переменная (кириллица); DataTable table_data/MyTable |
+| `business-error.process` / `system-error.process` | Delay v71, Log v165, Start, ReturnOrStop | Обработчики ошибок оркестратора; Log v165 |
+
+## Побайтово подтверждённые бинарные форматы
+
+### Text-контейнер (DiagramProperty @DefaultValue/@Value, Type=Text)
+
+```
+Base64( PREFIX(22) + encode_7bit(len(UTF8(ps_literal))) + UTF8(ps_literal) + 0x0B )
+PREFIX = 00 01 00 00 00 FF FF FF FF 01 00 00 00 00 00 00 00 06 01 00 00 00
+```
+
+Подтверждено на образцах: пустой литерал `""`, кириллица `"Выгрузка данных из бюджетной системы."` — PREFIX константен.
+
+- Пустая строка → `AAEAAAD/////AQAAAAAAAAAGAQAAAAIiIgs=`
+- Прочие скаляры в декларации — плоские строки: Number `0`, Logical `True`/`False`, SecureString (пустой) `''`.
+
+### Коллекции/DataTable
+
+Hashtable/Dictionary/DataTable хранят Base64-контейнеры с тем же 17-байтовым заголовком `00 01 00 00 00 FF FF FF FF 01 00 00 00 00 00 00 00` + `06` + payload с .NET-типами (AssemblyName `System.Data…`, `System.Collections…`). Полная раскладка — ближайший шаг разбора (см. PLAN, фаза 3).
+
+## Расхождения с текущими документами (требуют правок)
+
+1. **Условие = `IfCondition` v46, а не `IfElse` v23** (main.md §16, .sch SHP-COND-*). ValueType условия = `Any Expression`, не `Logical`. IfElse — вероятно, другая (старая) версия Designer → нужна профильная привязка правил к версии.
+2. **Порты — `ConnectorSettings`**, а не `Connector` (контексты правил .sch по коннекторам указывают на несуществующие элементы).
+3. **`ReturnOrStop` v113** — Stop-блок; в main.md не был зафиксирован.
+4. **Log в двух версиях** (165 и 174) в рамках одного проекта — версии блоков плавают; подтверждает риск profile-per-Designer-version.
+5. **Пустое While-условие снова пустое** — P1 (заполненный While) остаётся открытым; заполненное выражение подтверждено пока только для IfCondition.
+
+## Секреты
+
+Проверено сканированием (password/pwd/token/Data Source/url): литеральных секретов нет; все совпадения — код шаблонов блоков и имена переменных. Путь к тестовой accdb — внутренний, без персональных данных.
