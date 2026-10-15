@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from sherpa_xml import compiler, ir  # noqa: E402
+from sherpa_xml import compiler, ir, validator  # noqa: E402
 
 TEMPLATE = {
     "process": {"name": "Example Process", "mode": "draft"},
@@ -62,32 +62,40 @@ def cmd_init_ir(path: Path) -> int:
     return 0
 
 
-def cmd_validate_ir(path: Path) -> int:
+def cmd_validate_ir(path: Path, profile: str) -> int:
     try:
         parsed = ir.ProcessIR.parse(path.read_text(encoding="utf-8"))
-    except ir.IRError as exc:
+    except Exception as exc:  # noqa: BLE001 — JSON/IRError
         print(f"FAIL: {exc}")
         return 1
-    except Exception as exc:  # noqa: BLE001 — JSON-ошибки и пр.
-        print(f"FAIL: {exc}")
-        return 1
-    n_nodes = len(parsed["nodes"])
-    n_edges = len(parsed["edges"])
-    print(f"OK: IR валиден — {len(parsed['variables'])} переменных, {n_nodes} узлов, {n_edges} связей")
-    return 0
+    report = validator.validate_ir(parsed, profile)
+    for issue in report["issues"]:
+        print(f"  [{issue['severity']:5}] {issue['code']:14} {issue['location']}: {issue['message']}")
+    blocking = [i for i in report["issues"] if i["severity"] in ("FATAL", "ERROR")]
+    print(f"{'FAIL' if blocking else 'OK'}: {len(report['issues'])} замечаний, "
+          f"блокирующих {len(blocking)} (profile={profile})")
+    return 1 if report["status"] != "passed" else 0
 
 
 def cmd_build(ir_path: Path, out_path: Path, mode: str) -> int:
     try:
         parsed = ir.ProcessIR.parse(ir_path.read_text(encoding="utf-8"))
         parsed["process"]["mode"] = mode
+        report = validator.validate_ir(parsed, profile=mode)
+        if report["status"] != "passed":
+            for issue in report["issues"]:
+                if issue["severity"] in ("FATAL", "ERROR"):
+                    print(f"  [{issue['severity']:5}] {issue['code']:14} {issue['location']}: {issue['message']}")
+            print(f"FAIL: валидация профиля {mode} не пройдена — файл не выпущен")
+            return 1
         comp = compiler.Compiler()
         result = comp.compile(parsed)
         if comp.compile(parsed) != result:  # детерминизм: байт-в-байт
             print("FAIL: компиляция недетерминирована")
             return 1
         out_path.write_bytes(b"\xef\xbb\xbf" + result.encode("utf-8"))
-        print(f"OK: {out_path} ({len(result.encode('utf-8'))} байт, mode={mode})")
+        print(f"OK: {out_path} ({len(result.encode('utf-8'))} байт, mode={mode}, "
+              f"warnings={len(report['issues'])})")
         return 0
     except (ir.IRError, compiler.CompileError) as exc:
         print(f"FAIL: {exc}")
@@ -101,6 +109,7 @@ def main() -> int:
     p_init.add_argument("file", type=Path)
     p_val = sub.add_parser("validate-ir", help="проверить IR")
     p_val.add_argument("file", type=Path)
+    p_val.add_argument("--profile", choices=["draft", "release", "strict"], default="draft")
     p_build = sub.add_parser("build", help="скомпилировать .process")
     p_build.add_argument("ir_file", type=Path)
     p_build.add_argument("out_file", type=Path)
@@ -110,7 +119,7 @@ def main() -> int:
         return cmd_init_ir(args.file)
     if args.cmd == "build":
         return cmd_build(args.ir_file, args.out_file, args.mode)
-    return cmd_validate_ir(args.file)
+    return cmd_validate_ir(args.file, args.profile)
 
 
 if __name__ == "__main__":

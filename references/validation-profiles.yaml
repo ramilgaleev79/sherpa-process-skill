@@ -24,12 +24,13 @@ profiles:
       - ERROR
       - WARN_DETERMINISM
     forbidden:
-      - unresolved_todo                  # SHP-TODO-*: ToDo в release запрещён
-      - empty_while_condition            # подтверждённая оболочка, но поведение не гарантировано
+      - unresolved_todo                  # SHP-TODO-001: ToDo в release запрещён
       - unconfirmed_collection_block     # Hashtable*-блоки без golden (см. tests GOLDEN_MISSING)
-      - unknown_block_version            # версия блока вне confirmed_versions каталога
-      - implicit_truthiness              # условие не-Logical без явного сравнения (strict-подобное)
-      - variable_undeclared              # ссылки только на объявленные/external переменные
+      - variable_undeclared              # SEM-REF-001: ссылки только на объявленные/external переменные
+      - implicit_truthiness              # SEM-EXPR-010: условие не-Logical без явного сравнения
+    # empty_while_condition и unknown_block_version не входят в runtime-правила:
+    # пустое While-условие исключено контрактом IR (condition обязателен),
+    # неизвестная версия блока невозможна (компилятор использует только golden-шаблоны)
 
   strict:
     purpose: release + типовая строгость выражений
