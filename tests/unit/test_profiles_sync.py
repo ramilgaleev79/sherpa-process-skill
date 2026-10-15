@@ -25,9 +25,10 @@ def test_forbidden_codes_match_yaml():
 
 
 def test_runtime_codes_documented_in_yaml():
-    yaml_all = set()
     data = yaml.safe_load(YAML.read_text(encoding="utf-8"))["profiles"]
-    for p in ("release", "strict"):
-        yaml_all |= set(data[p].get("forbidden", []))
-    undocumented = profiles.FORBIDDEN["release"] | profiles.FORBIDDEN["strict"] - yaml_all
+    yaml_all = set(data["release"]["forbidden"])
+    if data["strict"].get("inherits") == "release":
+        yaml_all |= set(data["strict"]["forbidden"])  # strict наследует release
+    runtime = profiles.FORBIDDEN["release"] | profiles.FORBIDDEN["strict"]
+    undocumented = runtime - yaml_all
     assert not undocumented, f"коды profiles.py не описаны в yaml: {undocumented}"
