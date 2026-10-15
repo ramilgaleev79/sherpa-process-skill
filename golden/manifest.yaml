@@ -1,7 +1,7 @@
 # Манифест golden-эталонов (реальные файлы, серия real/)
 
 Источник: рабочий проект «Выгрузка данных из бюджетной системы» (Sherpa RPA Designer).
-Точная версия Designer: **уточнить у пользователя** — не зафиксирована.
+Версия Designer: **1.4.4** (сообщена пользователем 2026-10-15) — все выводы ниже привязаны к ней.
 Имена файлов нормализованы; оригиналы лежат в исходной папке проекта.
 
 Общее для всех файлов (подтверждено):
@@ -42,6 +42,9 @@
 | `b11-datatables-x3.process` | Start, ReturnOrStop + table1/2/3 | **Три состояния DataTable**: пустая (930 Б), schema-only (1254 Б: string/double/dateTime), схема+строки (1829 Б: string/int/decimal/Guid). DiffGram: `Table11`/`rowOrder=0`/`hasChanges=inserted`; DBNull = отсутствие элемента ячейки (§14.6 подтверждён). Полная модель — references/datatable-serialization.md |
 | `b12-if-variable.process` | Start, IfCondition v46, ReturnOrStop ×2 | **Заполненный IF-условием на переменную**: `Condition='$Переменная1'` (VT='Any Expression'). Граф ветвления: Yes → Stop#1 через порт `Input`, No → Stop#2 через порт `InputLeft` — подтверждены оба входных порта Stop и коннекторы Yes/No |
 | `b14-while-todo-graph.process` | Start, While v32, ToDoBlock v10, ReturnOrStop | **Полный граф цикла** (§17.5 подтверждён): Start→While/Input; While.Iteration→ToDo/InputLeft; ToDo.Next→While/Input (возврат тела); While.Next→Stop/Input. Условие While снова пустое — P1 остаётся открытым. Размеры блоков: Start 70×70, While 100×100, ToDo 200×75 |
+| `b15-for-loop.process` | Start, For v49, ToDoBlock v10, ReturnOrStop | **Второй вид цикла — For v49**: свойства StartIndex='0', EndIndex='5', Step='1' (Expression/Number), Index='$Index' (Variable/Number). Итерационный порт — `Index` (у While — `Iteration`!). Граф: For.Index→ToDo/InputLeft, ToDo.Next→For/Input, For.Next→Stop |
+| `b16-datatable-expanded.process` | 30 блоков (все DataTable-операции, 3× ReturnOrStop) | Расширенная версия b10: та же цепочка табличных операций + раскладка колонкой (Top с дробными значениями — авто-раскладка Designer при вставке подряд) |
+| `b17-invoke-expression.process` | Start, InvokeExpression v71, ReturnOrStop | **Выполнить выражение PowerShell**: InvokeExpression v71, `Expression1='10+$a'` (Type=Expression, VT=Expression) + переменная `a` (Number) |
 
 ## Побайтово подтверждённые бинарные форматы
 
