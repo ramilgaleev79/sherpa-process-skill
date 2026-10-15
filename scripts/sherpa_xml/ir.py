@@ -48,6 +48,7 @@ NODE_TYPES: dict[str, str] = {
     "AbortProcess": "FullAbort",
     "AbortContainer": "AbortContainer",
     "InvokeExpression": "InvokeExpression",
+    "Delay": "Delay",
     # Hashtable/Dictionary (общие физические блоки Hashtable*)
     "CollectionClear": "HashtableClear",
     "CollectionSetItem": "HashtableAddItem",

@@ -1,0 +1,40 @@
+{
+  "meta": {
+    "name": "retry-trycatch",
+    "status": "confirmed",
+    "source_golden": "b19-trycatch-abort.process",
+    "description": "Обёртка повторных попыток: Try/Catch с ограничением числа попыток и паузой между ними; при исчерпании попыток — Прервать процесс (FullAbort) со скриншотом.",
+    "when_to_use": "Когда блок/группа блоков может временно не удаться (сеть, файл занят, БД) и нужна повторная попытка с паузой; при окончательной ошибке — прервать робота.",
+    "entry": "try_1",
+    "exit": "try_1:Out",
+    "error_exit": "try_1:Error",
+    "body_slot": "try_1:Next — сюда подключается первый блок оборачиваемого тела",
+    "parameters": [
+      {"name": "Attempts", "description": "число попыток", "default_type": "Number", "example": 3},
+      {"name": "PauseSeconds", "description": "пауза между попытками, сек", "default_type": "Number", "example": 1},
+      {"name": "ScreenshotFile", "description": "переменная Text для файла скриншота при прерывании", "default_type": "Text"}
+    ]
+  },
+  "fragment": {
+    "variables": [
+      {"key": "pat_screenshot", "name": "ScreenshotFile", "sherpa_type": "Text", "scope": "local",
+       "initial": {"kind": "string_literal", "value": ""}}
+    ],
+    "nodes": [
+      {
+        "key": "try_1",
+        "type": "TryCatch",
+        "properties": {"NumberAttempts": "3", "PauseBetweenAttempts": "1"}
+      },
+      {
+        "key": "abort_1",
+        "type": "AbortProcess",
+        "properties": {"TypeException": "Default", "SetJobFailed": "False"}
+      }
+    ],
+    "edges": [
+      {"from": "try_1", "from_port": "Error", "to": "abort_1", "to_port": "InputLeft"}
+    ]
+  },
+  "notes": "Подтверждено golden b19: TryCatchContainer v102 (порты Input/InputLeft/Error/Next/Out; Next→тело, Out→успех, Error→FullAbort/InputLeft). NumberAttempts подтверждён с ValueType=Text, PauseBetweenAttempts — Expression; значения подставляются как PS-литералы. Тело подключается в body_slot; выход паттерна — Out; при ошибке после исчерпании попыток управление уходит в abort_1 (терминальный)."
+}

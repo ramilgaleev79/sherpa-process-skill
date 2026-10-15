@@ -1,0 +1,48 @@
+{
+  "meta": {
+    "name": "while-counter",
+    "status": "confirmed",
+    "source_golden": "b18-while-filled.process",
+    "description": "Цикл Пока по счётчику: инкремент переменной в теле, выход при достижении границы. Тело — один блок инкремента; расширяется добавлением блоков после инкремента.",
+    "when_to_use": "Когда нужно повторить действие фиксированное число раз или пока счётчик меньше границы.",
+    "entry": "while_1",
+    "exit": "while_1:Next",
+    "body_slot": "while_1:Iteration — сюда подключается первый блок тела; последний блок тела обязан вернуться в while_1:Input",
+    "parameters": [
+      {"name": "Counter", "description": "переменная-счётчик (Number)", "default_type": "Number"},
+      {"name": "Limit", "description": "граница сравнения", "default_type": "Number", "example": 3}
+    ]
+  },
+  "fragment": {
+    "variables": [
+      {"key": "pat_counter", "name": "Counter", "sherpa_type": "Number", "scope": "local",
+       "initial": {"kind": "number_literal", "value": 0}}
+    ],
+    "nodes": [
+      {
+        "key": "while_1",
+        "type": "WhileLoop",
+        "condition": {
+          "kind": "compare", "operator": "lt",
+          "left": {"kind": "variable_reference", "variable": "Counter"},
+          "right": {"kind": "number_literal", "value": 3}
+        }
+      },
+      {
+        "key": "incr_1",
+        "type": "Assign",
+        "assignments": [
+          {"target": "Counter",
+           "expression": {"kind": "arithmetic", "operator": "add",
+                          "left": {"kind": "variable_reference", "variable": "Counter"},
+                          "right": {"kind": "number_literal", "value": 1}}}
+        ]
+      }
+    ],
+    "edges": [
+      {"from": "while_1", "from_port": "Iteration", "to": "incr_1", "to_port": "InputLeft"},
+      {"from": "incr_1", "from_port": "Next", "to": "while_1", "to_port": "Input"}
+    ]
+  },
+  "notes": "Подтверждено golden b18 (While v32, Condition='$Переменная1 -eq $True') и b14 (граф Iteration→тело/InputLeft, тело.Next→While/Input). Условие lt подтверждено логикой IfCondition-образцов; при вставке замените Limit под задачу. Валидатор (фаза 5) предупредит, если тело не меняет Counter."
+}
