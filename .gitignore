@@ -1,0 +1,14 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Артефакты сборки и отчёты
+*.process.tmp
+reports/
+svrl/
+
+# ОС/редакторы
+Thumbs.db
+.DS_Store
