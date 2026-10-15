@@ -118,11 +118,24 @@ def inspect(path: Path, deep: bool, hex_limit: int) -> None:
         left = item.findtext("Left", "?")
         top = item.findtext("Top", "?")
         did = item.findtext("ID", "?")
+        # Внутренние теги шаблона несут XAML-namespace {clr-namespace:...};
+        # ищем по локальному имени тега.
+        def local(tag: str) -> str:
+            return tag.split("}")[-1]
+        filled = [
+            (e.get("Name"), e.get("Value"), e.get("Type"), e.get("ValueType"))
+            for e in inner.iter()
+            if local(e.tag) == "Property"
+            and e.get("Value")
+            and e.get("Name") not in ("ErrorLevel", "ErrorDirection", "ReportLevel", "ErrorMessage")
+        ]
         if deep:
             print(
                 f"  {iname:28} v{ver:<5} {item.findtext('Width','?')}x{item.findtext('Height','?')} "
                 f"@({left},{top}) ID={did[:8]}… DisplayName={inner.get('DisplayName','')!r}"
             )
+            for name, value, ptype, vtype in filled:
+                print(f"      {name}: {str(value)[:70]!r} (Type={ptype}, VT={vtype})")
     print("  Уникальные InternalName и их версии:")
     for iname in sorted(seen_versions):
         vers = sorted(set(seen_versions[iname]))

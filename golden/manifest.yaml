@@ -16,6 +16,8 @@
 
 ## Файлы
 
+### Серия A (структурная, из рабочего проекта)
+
 | Файл | Блоки (InternalName v Version) | Что подтверждает |
 |------|-------------------------------|------------------|
 | `diag01-start-stop.process` | Start v10, ReturnOrStop v113 | Минимальный граф; шаблоны Start/ReturnOrStop; `ReturnOrStop` — реальное имя Stop-блока |
@@ -27,6 +29,16 @@
 | `init-ifcondition.process` | Start, OpenFileDialog v46, InvokeExpression v71, LoadDataTable v115, IfCondition v46, Assign v166, ReturnOrStop | **IfCondition v46** (не IfElse!): заполненное условие `Test-Connection ... -Quiet`, ValueType='Any Expression'; порты Yes(Bottom)/No(Right) |
 | `main-rich.process` | For v49, ForeachHashtable v41, ForeachList v45, TryCatchContainer v97, ProcessContainer v124, CollapseContainer v11, Comment v21, RestClient v35, DatabaseCreateConnection v82, DatabaseInsertDataTable v32, LoadDataTable v115, AddRow v25, SplitString v92, FromJson v11, InvokeExpression v71, IfCondition v46, Delay v71, Log v165, FullAbort v30, Start, ReturnOrStop | Богатая библиотека шаблонов для будущих каталогов; непустая Text-переменная (кириллица); DataTable table_data/MyTable |
 | `business-error.process` / `system-error.process` | Delay v71, Log v165, Start, ReturnOrStop | Обработчики ошибок оркестратора; Log v165 |
+
+### Серия B (целевая, собрана пользователем по пробелам знаний)
+
+| Файл | Блоки | Что подтверждает |
+|------|-------|------------------|
+| `b04-securestring-ops.process` | Start, Assign v166 ×2, ReturnOrStop | **SecureString-операции**: `$Переменная2 = _tosecure($Переменная1)`, `$Переменная3 = _fromsecure($Переменная2)`; Assign: VariableN c `$`, VT='Variable'; ExpressionN VT='AnyDataType'; все 10 пар в шаблоне, незаполненные — пустые |
+| `b05-text-variants.process` | Start, ReturnOrStop + 5 Text-переменных | **Варианты записи Text**: `"Test123"`, `"Привет мир"` (кириллица), `""`, `"Он сказал \`"Тест\`""` (backtick-кавычки), `""Он сказал \`n\`"Тест\`"""` (многострочность + комбинированное экранирование) |
+| `b07-collections-filled.process` | Start, ReturnOrStop + Hashtable/Dictionary | Заполненные контейнеры: Hashtable 316 Б (BinaryFormatter: LoadFactor/Version/Comparer/HashCodeProvider/HashSize/Keys/Values), Dictionary 1453 Б (`Dictionary\`2[[System.Object, mscorlib…],[System.Object…]]` — подтверждение Dictionary<Object,Object>) |
+| `b09-list-ops.process` | 10 List-блоков + list (List) | **List-контейнер с элементами** (P2 закрыт): `List\`1[[System.String…]]`, _items/_size=5/_version, элементы "1".."5". Блоки: ListClear v9, ListAddItem v39, ListInsertItem v9, ListRemoveItem v14, ListRemoveAtItem v15 (ItemValue — возврат удалённого), ListSort v11 (Direction Enum), ListRemoveDuplicates v29, ListContains v77, ListLoadFromFile v17, ListSaveToFile v8. ВАЖНО: Items встречается в двух формах — `$list` и `"list"` (вариативность формата ссылки!) |
+| `b10-datatable-ops.process` | 28 DataTable-блоков + table (DataTable) | **DataTable-контейнер** 1829 Б: внутри `xs:schema` + `tmpDataSet` + `diffgr` (модель §14 main.md подтверждена). Блоки с заполненными свойствами: GetCellValue v47, SetCellValue v61, AddColumn v57 (ColumnType Enum: String; NewType: 'Int'), AddRow v25, ChangeTypeColumn v25, SortDataTable v80, DistinctDataTable v16, MergeDataTable v61, SelectRows v36, ContainsValue v88, FindRow v58, ContainsColumn v10, RemoveEmptyRowColumn v19, GetDataTableRange v16, InsertDataTable v13, TransposeDataTable v14, LoadCSVDataTable v33, SaveCSVDataTable v26, DataTableToText v5, DataTableToHashtable v17, DataTableToList v7, ListToDataTable v7, ClearRows v10, RemoveRow v25, RemoveColumn v13, RenameColumn v9 |
 
 ## Побайтово подтверждённые бинарные форматы
 
