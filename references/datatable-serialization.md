@@ -69,8 +69,20 @@ DiagramProperty @DefaultValue = Base64( контейнер )
 
 Колонка col4 (Guid) объявлена в схеме, но в строках table3 её элементы отсутствуют — DBNull кодируется опущением элемента ячейки. Пустая строка ≠ null.
 
-## Осталось на фазу 3
+## Побайтовая раскладка контейнера — РЕАЛИЗОВАНА (фаза 3.2)
 
-- Побайтовая раскладка контейнера: префиксы, length-prefixed вставки schema/diffgram, хвост System.Version.
-- Значения ячеек: форматы дат (ISO 8601 + offset), Guid (канонический), Boolean, экранирование XML в строках.
+Полная формула в `scripts/sherpa_xml/types/data_table.py` (docstring модуля);
+round-trip байт-в-байт подтверждён тестами на всех трёх состояниях golden (b11),
+builder'ы `build_schema`/`build_diffgram` воспроизводят golden-XML точно
+(включая CRLF и порядок атрибутов: у Guid-колонок `msdata:DataType` перед `type`).
+Хвост контейнера — сериализация `System.Version` со значением RemotingVersion
+`2.0.0.-1` (константа). Аналогично реализованы List и Hashtable
+(`types/collections.py`), byte-equal против b09/b07. Dictionary — encode/decode
+отложен (вложенные KeyValuePair`2-записи, нужен второй golden-образец);
+single-sample риски (capacity List, Version/HashSize Hashtable) помечены
+в docstring и снимаются новыми образцами.
+
+## Осталось
+
+- Значения ячеек: форматы дат (ISO 8601 + offset), Guid (канонический), Boolean, экранирование XML в строках (билдеры принимают значения как есть; типизация значений — фаза 4/5).
 - Вложенные Hashtable/DataTable в ячейках — не подтверждено (за пределами MVP, §14.9).
