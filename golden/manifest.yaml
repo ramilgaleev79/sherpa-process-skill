@@ -1,8 +1,14 @@
 # Манифест golden-эталонов (реальные файлы, серия real/)
 
-Источник: рабочий проект «Выгрузка данных из бюджетной системы» (Sherpa RPA Designer).
-Версия Designer: **1.4.4** (сообщена пользователем 2026-10-15) — все выводы ниже привязаны к ней.
+Источник: диаграммы, созданные в Sherpa Designer 1.4.4 (сборка **1.4.4.40162**) 14–15.10.2026.
 Имена файлов нормализованы; оригиналы лежат в исходной папке проекта.
+
+**Политика с 2026-10-16 (решение пользователя): эталоны принимаются ТОЛЬКО из
+актуального Designer 1.4.4.40162.** Файлы 2024 года (main/init/business_error/
+system_error с Log v165, TryCatch v97, FullAbort v30 и блоками DB*/RestClient/
+Foreach*/ProcessContainer/Comment/FromJson/SplitString/LoadDataTable/OpenFileDialog)
+удалены из базы и впредь не ingested: одно поколение блоков, без «плавающих» версий.
+Удалённые блоки вернутся в каталог только со свежими golden-образцами.
 
 Общее для всех файлов (подтверждено):
 
@@ -25,10 +31,7 @@
 | `diag03-assign-4vars.process` | + Assign v166 ×4 | Assign v166; переменные Number('0'), Logical('True'), Text(контейнер), SecureString('') |
 | `diag07-hashtable-dict-vars.process` | Start, ReturnOrStop | Начальные значения Hashtable и Dictionary (контейнеры) |
 | `diag14-while-empty.process` | + While v32 | While v32: порты Input/Iteration/InputLeft/Next; Condition с пустым Value (заполненное условие НЕ подтверждено) |
-| `diag11-log174-datatable.process` | Log v174, Start, ReturnOrStop | Log v174 (другая версия, чем v165!); DataTable-переменная table1 |
-| `init-ifcondition.process` | Start, OpenFileDialog v46, InvokeExpression v71, LoadDataTable v115, IfCondition v46, Assign v166, ReturnOrStop | **IfCondition v46** (не IfElse!): заполненное условие `Test-Connection ... -Quiet`, ValueType='Any Expression'; порты Yes(Bottom)/No(Right) |
-| `main-rich.process` | For v49, ForeachHashtable v41, ForeachList v45, TryCatchContainer v97, ProcessContainer v124, CollapseContainer v11, Comment v21, RestClient v35, DatabaseCreateConnection v82, DatabaseInsertDataTable v32, LoadDataTable v115, AddRow v25, SplitString v92, FromJson v11, InvokeExpression v71, IfCondition v46, Delay v71, Log v165, FullAbort v30, Start, ReturnOrStop | Богатая библиотека шаблонов для будущих каталогов; непустая Text-переменная (кириллица); DataTable table_data/MyTable |
-| `business-error.process` / `system-error.process` | Delay v71, Log v165, Start, ReturnOrStop | Обработчики ошибок оркестратора; Log v165 |
+| `diag11-log174-datatable.process` | Log v174, Start, ReturnOrStop | Log v174; DataTable-переменная table1 |
 
 ### Серия B (целевая, собрана пользователем по пробелам знаний)
 

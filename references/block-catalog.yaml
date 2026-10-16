@@ -263,7 +263,6 @@ blocks:
     golden_files:
     - b10-datatable-ops.process
     - b16-datatable-expanded.process
-    - main-rich.process
     internal_name: AddRow
     linux_available: 'True'
     ports:
@@ -324,7 +323,6 @@ blocks:
     golden_files:
     - b04-securestring-ops.process
     - diag03-assign-4vars.process
-    - init-ifcondition.process
     internal_name: Assign
     linux_available: 'True'
     ports:
@@ -616,7 +614,6 @@ blocks:
     display_name: Контейнер
     golden_files:
     - b20-container-abort.process
-    - main-rich.process
     internal_name: CollapseContainer
     linux_available: 'True'
     ports:
@@ -750,20 +747,6 @@ blocks:
         is_required: 'False'
         type: Variable
         value_type: Variable
-    version_differences: {}
-  Comment:
-    confirmed_versions:
-    - '21'
-    default_size:
-      height: '75'
-      width: '200'
-    display_name: Пример показывает как создать запись в учетных данных Windows. Прочитать их и удалить
-    golden_files:
-    - main-rich.process
-    internal_name: Comment
-    linux_available: 'True'
-    ports: []
-    properties: {}
     version_differences: {}
   ContainsColumn:
     confirmed_versions:
@@ -1149,187 +1132,6 @@ blocks:
         type: Variable
         value_type: DataTable
     version_differences: {}
-  DatabaseCreateConnection:
-    confirmed_versions:
-    - '82'
-    default_size:
-      height: '75'
-      width: '200'
-    display_name: Подключение к БД Access
-    golden_files:
-    - main-rich.process
-    internal_name: DatabaseCreateConnection
-    linux_available: 'True'
-    ports:
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: Input
-      orientation: Top
-      relative_position: 0.5,0
-    - caption: Если ошибка
-      max_in: '0'
-      max_out: '1'
-      name: Error
-      orientation: Right
-      relative_position: 1,0.5
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: InputLeft
-      orientation: Left
-      relative_position: 0,0.5
-    - caption: ''
-      max_in: '0'
-      max_out: '1'
-      name: Next
-      orientation: Bottom
-      relative_position: 0.5,1
-    properties:
-      Connection:
-        caption: Ссылка на подключение
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Connection
-      ConnectionString:
-        caption: Строка подключения
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'True'
-        type: Expression
-        value_type: Text
-      Password:
-        caption: Пароль
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-      Provider:
-        caption: Провайдер SQL
-        default_value: ''
-        enum_variants: SQL;MySQL;SQLite;Firebird;Oracle;OleDb;PostgreSQL;Odbc
-        is_required: 'False'
-        type: Enum
-        value_type: ''
-      User:
-        caption: Пользователь
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-    version_differences: {}
-  DatabaseInsertDataTable:
-    confirmed_versions:
-    - '32'
-    default_size:
-      height: '75'
-      width: '200'
-    display_name: Вставить таблицу данных
-    golden_files:
-    - main-rich.process
-    internal_name: DatabaseInsertDataTable
-    linux_available: 'True'
-    ports:
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: Input
-      orientation: Top
-      relative_position: 0.5,0
-    - caption: Если ошибка
-      max_in: '0'
-      max_out: '1'
-      name: Error
-      orientation: Right
-      relative_position: 1,0.5
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: InputLeft
-      orientation: Left
-      relative_position: 0,0.5
-    - caption: ''
-      max_in: '0'
-      max_out: '1'
-      name: Next
-      orientation: Bottom
-      relative_position: 0.5,1
-    properties:
-      Connection:
-        caption: Ссылка на подключение
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Connection
-      ConnectionString:
-        caption: Строка подключения
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-      ExcludeColumns:
-        caption: Исключить колонки
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Number/Text
-      InsertTable:
-        caption: Таблица Данных
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'True'
-        type: Expression
-        value_type: DataTable
-      Password:
-        caption: Пароль
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-      Provider:
-        caption: Провайдер SQL
-        default_value: ''
-        enum_variants: SQL;MySQL;SQLite;Firebird;Oracle;OleDb;PostgreSQL;Odbc
-        is_required: 'False'
-        type: Enum
-        value_type: ''
-      Result:
-        caption: Результат
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Number
-      TableName:
-        caption: Имя таблицы
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'True'
-        type: Expression
-        value_type: Text
-      Timeout:
-        caption: Время ожидания
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Number
-      User:
-        caption: Пользователь
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-    version_differences: {}
   Delay:
     confirmed_versions:
     - '71'
@@ -1339,9 +1141,6 @@ blocks:
     display_name: Пауза
     golden_files:
     - b21-delay.process
-    - business-error.process
-    - main-rich.process
-    - system-error.process
     internal_name: Delay
     linux_available: 'True'
     ports:
@@ -1563,7 +1362,6 @@ blocks:
     display_name: Цикл
     golden_files:
     - b15-for-loop.process
-    - main-rich.process
     internal_name: For
     linux_available: 'True'
     ports:
@@ -1621,207 +1419,15 @@ blocks:
         type: Expression
         value_type: Number
     version_differences: {}
-  ForeachHashtable:
-    confirmed_versions:
-    - '41'
-    default_size:
-      height: '150'
-      width: '150'
-    display_name: Цикл Для каждого (Словарь)
-    golden_files:
-    - main-rich.process
-    internal_name: ForeachHashtable
-    linux_available: 'True'
-    ports:
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: Input
-      orientation: Top
-      relative_position: 0.5,0
-    - caption: Элемент
-      max_in: '0'
-      max_out: '1'
-      name: Item
-      orientation: Right
-      relative_position: 1,0.5
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: InputLeft
-      orientation: Left
-      relative_position: 0,0.5
-    - caption: ''
-      max_in: '0'
-      max_out: '1'
-      name: Next
-      orientation: Bottom
-      relative_position: 0.5,1
-    properties:
-      ItemIndex:
-        caption: Индекс элемента
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Number
-      Items:
-        caption: Словарь
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'True'
-        type: Expression
-        value_type: Hashtable
-      Key:
-        caption: Ключ
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Text
-      Value:
-        caption: Значение
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Object
-    version_differences: {}
-  ForeachList:
-    confirmed_versions:
-    - '45'
-    default_size:
-      height: '150'
-      width: '150'
-    display_name: Цикл Для каждого (Список)
-    golden_files:
-    - main-rich.process
-    internal_name: ForeachList
-    linux_available: 'True'
-    ports:
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: Input
-      orientation: Top
-      relative_position: 0.5,0
-    - caption: Элемент
-      max_in: '0'
-      max_out: '1'
-      name: Item
-      orientation: Right
-      relative_position: 1,0.5
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: InputLeft
-      orientation: Left
-      relative_position: 0,0.5
-    - caption: ''
-      max_in: '0'
-      max_out: '1'
-      name: Next
-      orientation: Bottom
-      relative_position: 0.5,1
-    properties:
-      Item:
-        caption: Элемент
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Object
-      ItemIndex:
-        caption: Индекс элемента
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Number
-      Items:
-        caption: Список
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'True'
-        type: Expression
-        value_type: List
-    version_differences: {}
-  FromJson:
-    confirmed_versions:
-    - '11'
-    default_size:
-      height: '75'
-      width: '200'
-    display_name: $paramRzPrSub
-    golden_files:
-    - main-rich.process
-    internal_name: FromJson
-    linux_available: 'True'
-    ports:
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: Input
-      orientation: Top
-      relative_position: 0.5,0
-    - caption: Если ошибка
-      max_in: '0'
-      max_out: '1'
-      name: Error
-      orientation: Right
-      relative_position: 1,0.5
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: InputLeft
-      orientation: Left
-      relative_position: 0,0.5
-    - caption: ''
-      max_in: '0'
-      max_out: '1'
-      name: Next
-      orientation: Bottom
-      relative_position: 0.5,1
-    properties:
-      AlternateMethod:
-        caption: Альтернативный метод
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Bool
-        value_type: ''
-      AsDictionary:
-        caption: Как словарь
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Bool
-        value_type: ''
-      InString:
-        caption: Строка JSON
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'True'
-        type: Expression
-        value_type: Text
-      Result:
-        caption: Результат
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Object
-    version_differences: {}
   FullAbort:
     confirmed_versions:
-    - '30'
     - '38'
     default_size:
       height: '70'
       width: '70'
     display_name: Прервать
     golden_files:
-    - main-rich.process
+    - b19-trycatch-abort.process
     internal_name: FullAbort
     linux_available: 'True'
     ports:
@@ -1844,6 +1450,13 @@ blocks:
         enum_variants: ''
         is_required: 'False'
         type: Bool
+        value_type: ''
+      ScreenshotFile:
+        caption: Файл скриншота
+        default_value: '""'
+        enum_variants: ''
+        is_required: 'False'
+        type: Variable
         value_type: ''
       SendOrkest:
         caption: Логировать в оркестратор
@@ -1880,71 +1493,7 @@ blocks:
         is_required: 'False'
         type: Expression
         value_type: AnyDataType
-    version_differences:
-      '38':
-        ports:
-        - caption: ''
-          max_in: '100'
-          max_out: '0'
-          name: Input
-          orientation: Top
-          relative_position: 0.5,0
-        - caption: ''
-          max_in: '100'
-          max_out: '0'
-          name: InputLeft
-          orientation: Left
-          relative_position: 0,0.5
-        properties:
-          IsScreenshot:
-            caption: Скриншот в оркестратор
-            default_value: '""'
-            enum_variants: ''
-            is_required: 'False'
-            type: Bool
-            value_type: ''
-          ScreenshotFile:
-            caption: Файл скриншота
-            default_value: '""'
-            enum_variants: ''
-            is_required: 'False'
-            type: Variable
-            value_type: ''
-          SendOrkest:
-            caption: Логировать в оркестратор
-            default_value: '""'
-            enum_variants: ''
-            is_required: 'False'
-            type: Bool
-            value_type: ''
-          SetJobFailed:
-            caption: Установить статус Failed
-            default_value: '""'
-            enum_variants: ''
-            is_required: 'False'
-            type: Bool
-            value_type: ''
-          ThrowException:
-            caption: Генерировать ошибку
-            default_value: '""'
-            enum_variants: ''
-            is_required: 'False'
-            type: Expression
-            value_type: Text
-          TypeException:
-            caption: Тип ошибки
-            default_value: ''
-            enum_variants: Default;System;Business
-            is_required: 'False'
-            type: Enum
-            value_type: ''
-          Value:
-            caption: Записать в лог
-            default_value: '""'
-            enum_variants: '{x:Null}'
-            is_required: 'False'
-            type: Expression
-            value_type: AnyDataType
+    version_differences: {}
   GetCellValue:
     confirmed_versions:
     - '47'
@@ -2104,8 +1653,6 @@ blocks:
     - b12-if-variable.process
     - b19-trycatch-abort.process
     - b20-container-abort.process
-    - init-ifcondition.process
-    - main-rich.process
     internal_name: IfCondition
     linux_available: 'True'
     ports:
@@ -2218,8 +1765,6 @@ blocks:
     display_name: Выполнить выражение PowerShell
     golden_files:
     - b17-invoke-expression.process
-    - init-ifcondition.process
-    - main-rich.process
     internal_name: InvokeExpression
     linux_available: 'True'
     ports:
@@ -3036,91 +2581,15 @@ blocks:
         type: Variable
         value_type: DataTable
     version_differences: {}
-  LoadDataTable:
-    confirmed_versions:
-    - '115'
-    default_size:
-      height: '75'
-      width: '200'
-    display_name: Загрузить Таблицу Данных
-    golden_files:
-    - init-ifcondition.process
-    internal_name: LoadDataTable
-    linux_available: 'True'
-    ports:
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: Input
-      orientation: Top
-      relative_position: 0.5,0
-    - caption: Если ошибка
-      max_in: '0'
-      max_out: '1'
-      name: Error
-      orientation: Right
-      relative_position: 1,0.5
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: InputLeft
-      orientation: Left
-      relative_position: 0,0.5
-    - caption: ''
-      max_in: '0'
-      max_out: '1'
-      name: Next
-      orientation: Bottom
-      relative_position: 0.5,1
-    properties:
-      HasHeader:
-        caption: Заголовок
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Bool
-        value_type: ''
-      Path:
-        caption: Путь к файлу
-        default_value: '""'
-        enum_variants: '{x:Null}'
-        is_required: 'True'
-        type: Expression
-        value_type: Text
-      ReadPassword:
-        caption: Пароль для чтения
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text/SecureString
-      Table:
-        caption: Таблица Данных
-        default_value: '""'
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Variable
-        value_type: DataTable
-      Worksheet:
-        caption: Лист
-        default_value: '""'
-        enum_variants: '{x:Null}'
-        is_required: 'True'
-        type: Expression
-        value_type: Number/Text
-    version_differences: {}
   Log:
     confirmed_versions:
-    - '165'
     - '174'
     default_size:
       height: '100'
       width: '100'
     display_name: Лог
     golden_files:
-    - business-error.process
-    - main-rich.process
-    - system-error.process
+    - diag11-log174-datatable.process
     internal_name: Log
     linux_available: 'True'
     ports:
@@ -3266,229 +2735,6 @@ blocks:
         is_required: 'True'
         type: Variable
         value_type: DataTable
-    version_differences: {}
-  OpenFileDialog:
-    confirmed_versions:
-    - '46'
-    default_size:
-      height: '75'
-      width: '200'
-    display_name: Открыть файл
-    golden_files:
-    - init-ifcondition.process
-    internal_name: OpenFileDialog
-    linux_available: 'True'
-    ports:
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: Input
-      orientation: Top
-      relative_position: 0.5,0
-    - caption: Отмена
-      max_in: '0'
-      max_out: '1'
-      name: Cancel
-      orientation: Right
-      relative_position: 1,0.5
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: InputLeft
-      orientation: Left
-      relative_position: 0,0.5
-    - caption: ''
-      max_in: '0'
-      max_out: '1'
-      name: Next
-      orientation: Bottom
-      relative_position: 0.5,1
-    properties:
-      DefaultExt:
-        caption: Расширение по умолчанию
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: ''
-      Filter:
-        caption: Фильтр
-        default_value: '""'
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-      Result:
-        caption: Путь к файлу
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Text
-      Title:
-        caption: Заголовок
-        default_value: '""'
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-    version_differences: {}
-  ProcessContainer:
-    confirmed_versions:
-    - '124'
-    default_size:
-      height: '100'
-      width: '150'
-    display_name: 'business_error '
-    golden_files:
-    - main-rich.process
-    internal_name: ProcessContainer
-    linux_available: 'True'
-    ports:
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: Input
-      orientation: Top
-      relative_position: 0.5,0
-    - caption: Если ошибка
-      max_in: '0'
-      max_out: '1'
-      name: Error
-      orientation: Right
-      relative_position: 1,0.5
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: InputLeft
-      orientation: Left
-      relative_position: 0,0.5
-    - caption: ''
-      max_in: '0'
-      max_out: '1'
-      name: Next
-      orientation: Bottom
-      relative_position: 0.5,1
-    properties:
-      DiagramName:
-        caption: Имя диаграммы
-        default_value: '""'
-        enum_variants: '{x:Null}'
-        is_required: 'True'
-        type: Expression
-        value_type: Text
-      Expression1:
-        caption: Значение 1
-        default_value: '""'
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Expression
-        value_type: AnyDataType
-      Expression10:
-        caption: Выражение 5
-        default_value: ''
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Expression
-        value_type: AnyDataType
-      Expression2:
-        caption: Значение 2
-        default_value: '""'
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Expression
-        value_type: AnyDataType
-      Expression3:
-        caption: Значение 3
-        default_value: '""'
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Expression
-        value_type: AnyDataType
-      Expression4:
-        caption: Значение 4
-        default_value: '""'
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Expression
-        value_type: AnyDataType
-      Expression5:
-        caption: Значение 5
-        default_value: '""'
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Expression
-        value_type: AnyDataType
-      Expression6:
-        caption: Выражение 1
-        default_value: ''
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Expression
-        value_type: AnyDataType
-      Expression7:
-        caption: Выражение 2
-        default_value: ''
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Expression
-        value_type: AnyDataType
-      Expression8:
-        caption: Выражение 3
-        default_value: ''
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Expression
-        value_type: AnyDataType
-      Expression9:
-        caption: Выражение 4
-        default_value: ''
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Expression
-        value_type: AnyDataType
-      ProcessArguments:
-        caption: Аргументы
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-      Variable1:
-        caption: Переменная 1
-        default_value: ''
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Variable
-        value_type: Variable
-      Variable2:
-        caption: Переменная 2
-        default_value: ''
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Variable
-        value_type: Variable
-      Variable3:
-        caption: Переменная 3
-        default_value: ''
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Variable
-        value_type: Variable
-      Variable4:
-        caption: Переменная 4
-        default_value: ''
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Variable
-        value_type: Variable
-      Variable5:
-        caption: Переменная 5
-        default_value: ''
-        enum_variants: '{x:Null}'
-        is_required: 'False'
-        type: Variable
-        value_type: Variable
     version_differences: {}
   RemoveColumn:
     confirmed_versions:
@@ -3709,177 +2955,6 @@ blocks:
         type: Variable
         value_type: DataTable
     version_differences: {}
-  RestClient:
-    confirmed_versions:
-    - '35'
-    default_size:
-      height: '75'
-      width: '200'
-    display_name: REST Клиент
-    golden_files:
-    - main-rich.process
-    internal_name: RestClient
-    linux_available: 'True'
-    ports:
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: Input
-      orientation: Top
-      relative_position: 0.5,0
-    - caption: Если ошибка
-      max_in: '0'
-      max_out: '1'
-      name: Error
-      orientation: Right
-      relative_position: 1,0.5
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: InputLeft
-      orientation: Left
-      relative_position: 0,0.5
-    - caption: ''
-      max_in: '0'
-      max_out: '1'
-      name: Next
-      orientation: Bottom
-      relative_position: 0.5,1
-    properties:
-      AcceptHeader:
-        caption: Accept Заголовок
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-      BasicPassword:
-        caption: Пароль
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text/SecureString
-      BasicUsername:
-        caption: Логин
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-      ContentBody:
-        caption: Содержание запроса
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-      ContentType:
-        caption: Content-Type Заголовок
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-      Encoding:
-        caption: Кодировка
-        default_value: ''
-        enum_variants: UTF8;Ansi
-        is_required: 'False'
-        type: Enum
-        value_type: ''
-      ListCookies:
-        caption: Куки
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: ListOfObjects
-      ListFiles:
-        caption: Файлы
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Hashtable
-      ListHeaders:
-        caption: Заголовки
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Hashtable
-      ListParams:
-        caption: Параметры
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Hashtable
-      PreAuthenticate:
-        caption: PreAuthenticate
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Bool
-        value_type: ''
-      Result:
-        caption: Результат
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Text
-      ResultCookies:
-        caption: Куки
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: List
-      ResultHeaders:
-        caption: Заголовки ответа
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Hashtable
-      ResultStatusCode:
-        caption: Код ответа
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: Number
-      ResultUrl:
-        caption: Текущий Url
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: ''
-      Timeout:
-        caption: Время ожидания
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Number
-      TypeRequest:
-        caption: Тип запроса
-        default_value: ''
-        enum_variants: Get;Post;Put;Delete;Head;Options;Patch;Merge;Copy;Search
-        is_required: 'False'
-        type: Enum
-        value_type: ''
-      Url:
-        caption: URL
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'True'
-        type: Expression
-        value_type: Text
-    version_differences: {}
   ReturnOrStop:
     confirmed_versions:
     - '113'
@@ -3903,16 +2978,12 @@ blocks:
     - b19-trycatch-abort.process
     - b20-container-abort.process
     - b21-delay.process
-    - business-error.process
     - diag01-start-stop.process
     - diag02-start-todo-stop.process
     - diag03-assign-4vars.process
     - diag07-hashtable-dict-vars.process
     - diag11-log174-datatable.process
     - diag14-while-empty.process
-    - init-ifcondition.process
-    - main-rich.process
-    - system-error.process
     internal_name: ReturnOrStop
     linux_available: 'True'
     ports:
@@ -4366,86 +3437,6 @@ blocks:
         type: Variable
         value_type: DataTable
     version_differences: {}
-  SplitString:
-    confirmed_versions:
-    - '92'
-    default_size:
-      height: '75'
-      width: '200'
-    display_name: $uuid
-    golden_files:
-    - main-rich.process
-    internal_name: SplitString
-    linux_available: 'True'
-    ports:
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: Input
-      orientation: Top
-      relative_position: 0.5,0
-    - caption: Если ошибка
-      max_in: '0'
-      max_out: '1'
-      name: Error
-      orientation: Right
-      relative_position: 1,0.5
-    - caption: ''
-      max_in: '100'
-      max_out: '0'
-      name: InputLeft
-      orientation: Left
-      relative_position: 0,0.5
-    - caption: ''
-      max_in: '0'
-      max_out: '1'
-      name: Next
-      orientation: Bottom
-      relative_position: 0.5,1
-    properties:
-      InString:
-        caption: Текст
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'True'
-        type: Expression
-        value_type: Text
-      NewLine:
-        caption: Новая строка
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Bool
-        value_type: ''
-      RemoveEmpty:
-        caption: Удалить пустые подстроки
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Bool
-        value_type: ''
-      Result:
-        caption: Результат
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Variable
-        value_type: List
-      Separator:
-        caption: Разделитель
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Expression
-        value_type: Text
-      Trim:
-        caption: Триммировать
-        default_value: '""'
-        enum_variants: ''
-        is_required: 'False'
-        type: Bool
-        value_type: ''
-    version_differences: {}
   Start:
     confirmed_versions:
     - '10'
@@ -4469,16 +3460,12 @@ blocks:
     - b19-trycatch-abort.process
     - b20-container-abort.process
     - b21-delay.process
-    - business-error.process
     - diag01-start-stop.process
     - diag02-start-todo-stop.process
     - diag03-assign-4vars.process
     - diag07-hashtable-dict-vars.process
     - diag11-log174-datatable.process
     - diag14-while-empty.process
-    - init-ifcondition.process
-    - main-rich.process
-    - system-error.process
     internal_name: Start
     linux_available: 'True'
     ports:
@@ -4713,14 +3700,13 @@ blocks:
     version_differences: {}
   TryCatchContainer:
     confirmed_versions:
-    - '97'
     - '102'
     default_size:
       height: '75'
       width: '200'
     display_name: Try/Catch
     golden_files:
-    - main-rich.process
+    - b19-trycatch-abort.process
     internal_name: TryCatchContainer
     linux_available: 'True'
     ports:

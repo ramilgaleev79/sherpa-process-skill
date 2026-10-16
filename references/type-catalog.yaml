@@ -8,7 +8,6 @@ variable_types:
     - b11-datatables-x3.process
     - b16-datatable-expanded.process
     - diag11-log174-datatable.process
-    - main-rich.process
     runtime: System.Data.DataTable (xs:schema + DiffGram, references/datatable-serialization.md)
   Dictionary:
     observed_in:
@@ -33,7 +32,6 @@ variable_types:
     - b20-container-abort.process
     - diag03-assign-4vars.process
     - diag14-while-empty.process
-    - main-rich.process
     runtime: System.Boolean (True/False; $True/$False в выражениях)
   Number:
     observed_in:
@@ -49,5 +47,4 @@ variable_types:
     observed_in:
     - b05-text-variants.process
     - diag03-assign-4vars.process
-    - main-rich.process
     runtime: бинарный контейнер Base64 (см. references/text-serialization.md)
