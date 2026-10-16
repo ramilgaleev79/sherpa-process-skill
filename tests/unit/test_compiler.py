@@ -182,3 +182,49 @@ def test_parity_with_golden_diag01():
     m_conn = mine.findall("Connections/Connection")[0]
     for field in ("SourceConnectorName", "SinkConnectorName", "SourceArrowSymbol", "SinkArrowSymbol"):
         assert g_conn.findtext(field) == m_conn.findtext(field)
+
+
+def test_todo_display_name_is_action():
+    ir_dict = {
+        "process": {"name": "T", "mode": "draft"},
+        "variables": [],
+        "nodes": [
+            {"key": "s", "type": "Start"},
+            {"key": "t", "type": "ToDo", "unresolved_action": "Сделать снимок экрана"},
+            {"key": "e", "type": "Stop"},
+        ],
+        "edges": [{"from": "s", "to": "t"}, {"from": "t", "to": "e"}],
+    }
+    _, root = _compile(ir_dict)
+    for di in root.findall("DesignerItems/DesignerItem"):
+        inner = ET.fromstring(di.find("Content").text)
+        if inner.get("InternalName") == "ToDoBlock":
+            assert inner.get("DisplayName") == "Сделать снимок экрана"
+            return
+    raise AssertionError("ToDoBlock не найден")
+
+
+def test_display_name_for_any_node():
+    ir_dict = {
+        "process": {"name": "T", "mode": "draft"},
+        "variables": [{"key": "v", "name": "Index", "sherpa_type": "Number",
+                       "initial": {"kind": "number_literal", "value": 0}}],
+        "nodes": [
+            {"key": "s", "type": "Start"},
+            {"key": "c", "type": "Condition", "display_name": "$Index -gt 2",
+             "condition": {"kind": "compare", "operator": "gt",
+                           "left": {"kind": "variable_reference", "variable": "Index"},
+                           "right": {"kind": "number_literal", "value": 2}}},
+            {"key": "e", "type": "Stop"},
+        ],
+        "edges": [{"from": "s", "to": "c"},
+                  {"from": "c", "from_port": "Yes", "to": "e"},
+                  {"from": "c", "from_port": "No", "to": "e", "to_port": "InputLeft"}],
+    }
+    _, root = _compile(ir_dict)
+    for di in root.findall("DesignerItems/DesignerItem"):
+        inner = ET.fromstring(di.find("Content").text)
+        if inner.get("InternalName") == "IfCondition":
+            assert inner.get("DisplayName") == "$Index -gt 2"
+            return
+    raise AssertionError("IfCondition не найден")

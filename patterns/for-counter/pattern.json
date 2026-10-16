@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "name": "for-counter",
+    "status": "confirmed",
+    "source_golden": "b15-for-loop.process, best_screenshots_mail_save.process",
+    "description": "Цикл For с индексом 1..N: для ФИКСИРОВАННОГО числа повторов. Без переменной-счётчика, без инкремента, без сравнения в условии — один блок вместо трёх сущностей. Диспетчеризация по номеру итерации (например, «третий — по почте, остальные — на диск») — условие $Index -gt N внутри тела.",
+    "when_to_use": "ПОВТОРЫ ЗАДАНЫ ЧИСЛОМ («5 раз», «для каждого из 5 файлов по счёту»). Выбор цикла: фиксированное количество → ForLoop; условие нельзя выразить диапазоном (ждать флаг, пока файл существует) → WhileLoop. Внутри тела различать итерации — If по $Index.",
+    "entry": "for_1",
+    "exit": "for_1:Next",
+    "body_slot": "for_1:Index — сюда первый блок тела (to_port=InputLeft); последний блок тела возвращается в for_1:Input",
+    "parameters": [
+      {"name": "Index", "description": "переменная цикла (Number); в теле читать $Index", "default_type": "Number"}
+    ]
+  },
+  "fragment": {
+    "variables": [],
+    "nodes": [
+      {
+        "key": "for_1",
+        "type": "ForLoop",
+        "start_index": {"kind": "number_literal", "value": 1},
+        "end_index": {"kind": "number_literal", "value": 5},
+        "step": {"kind": "number_literal", "value": 1},
+        "index_variable": "Index"
+      }
+    ],
+    "edges": []
+  },
+  "notes": "Подтверждено golden b15 (For v49: StartIndex=1..EndIndex=5, Step=1, Index=$Index; порт итерации Index, тело через InputLeft, возврат в For/Input) и best_screenshots_mail_save (реальная задача пользователя: For 1..5 → ToDo «Сделать скриншот» → If «$Index -gt 2» → Yes: «Сохраняем скриншот» → возврат; No: сразу возврат; For.Next → «Отправляем письмо»). display_name условия = текст условия. Переменная Index объявляется в variables процесса (Number, initial 0)."
+}

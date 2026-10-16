@@ -112,6 +112,7 @@ _NODE_KEYS = frozenset(
         "key",
         "type",
         "purpose",
+        "display_name",
         "unresolved_action",
         "assignments",
         "condition",

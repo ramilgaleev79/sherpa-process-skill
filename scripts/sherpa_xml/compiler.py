@@ -177,13 +177,26 @@ def node_property_values(node: dict) -> dict[str, str]:
     return values
 
 
-def fill_template(template_content: str, values: dict[str, str], defaults: dict[str, str]) -> str:
-    """Подстановка Property/@Value в сырой XML шаблона (сохраняя всё остальное байт-в-байт).
+def fill_template(
+    template_content: str,
+    values: dict[str, str],
+    defaults: dict[str, str],
+    display_name: str | None = None,
+) -> str:
+    """Подстановка Property/@Value и DisplayName в сырой XML шаблона.
 
-    Правило: свойства из `values` — наши; все остальные Value сбрасываются
-    в DefaultValue шаблона (генерация не зависит от того, был ли образец заполнен).
+    Правила (golden best_screenshots_mail_save):
+    - DisplayName — смысловой: у ToDo это имя отсутствующего действия
+      («Сделать снимок экрана»), у условия — текст условия;
+    - свойства из `values` — наши; все остальные Value сбрасываются
+      в DefaultValue шаблона (никаких пустых "" сверх заданного).
     """
     result = template_content
+    if display_name:
+        escaped = xml_attr_escape(display_name)
+        result, n = re.subn(r'(DisplayName=")[^"]*(")', lambda m: m.group(1) + escaped + m.group(2), result, count=1)
+        if n != 1:
+            raise CompileError("DisplayName не найден в шаблоне")
     prop_names = set(defaults) | set(values)
     for name in sorted(prop_names):
         new_value = values.get(name, defaults.get(name, ""))
@@ -299,7 +312,11 @@ class Compiler:
         physical = self._physical(node)
         tpl = self.templates[physical]
         values = node_property_values(node)
-        content = fill_template(tpl["content"], values, tpl["property_defaults"])
+        # DisplayName: явный display_name; у ToDo — имя отсутствующего действия (golden best_*)
+        display = node.get("display_name")
+        if not display and node["type"] == "ToDo":
+            display = node.get("unresolved_action")
+        content = fill_template(tpl["content"], values, tpl["property_defaults"], display_name=display)
         ET.fromstring(content)  # well-formed проверка шаблона после подстановки
         w, h = tpl["default_size"]["width"], tpl["default_size"]["height"]
         lines = [

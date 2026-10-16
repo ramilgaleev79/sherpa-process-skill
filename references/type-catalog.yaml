@@ -36,15 +36,18 @@ variable_types:
   Number:
     observed_in:
     - b17-invoke-expression.process
+    - best-screenshots-mail-save.process
     - diag03-assign-4vars.process
     runtime: System.Double/Int (плоская строка в декларации)
   SecureString:
     observed_in:
     - b04-securestring-ops.process
+    - best-screenshots-mail-save.process
     - diag03-assign-4vars.process
     runtime: System.Security.SecureString (пустая строка в декларации)
   Text:
     observed_in:
     - b05-text-variants.process
+    - best-screenshots-mail-save.process
     - diag03-assign-4vars.process
     runtime: бинарный контейнер Base64 (см. references/text-serialization.md)

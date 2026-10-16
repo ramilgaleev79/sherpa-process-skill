@@ -1362,6 +1362,7 @@ blocks:
     display_name: Цикл
     golden_files:
     - b15-for-loop.process
+    - best-screenshots-mail-save.process
     internal_name: For
     linux_available: 'True'
     ports:
@@ -1653,6 +1654,7 @@ blocks:
     - b12-if-variable.process
     - b19-trycatch-abort.process
     - b20-container-abort.process
+    - best-screenshots-mail-save.process
     internal_name: IfCondition
     linux_available: 'True'
     ports:
@@ -2978,6 +2980,7 @@ blocks:
     - b19-trycatch-abort.process
     - b20-container-abort.process
     - b21-delay.process
+    - best-screenshots-mail-save.process
     - diag01-start-stop.process
     - diag02-start-todo-stop.process
     - diag03-assign-4vars.process
@@ -3460,6 +3463,7 @@ blocks:
     - b19-trycatch-abort.process
     - b20-container-abort.process
     - b21-delay.process
+    - best-screenshots-mail-save.process
     - diag01-start-stop.process
     - diag02-start-todo-stop.process
     - diag03-assign-4vars.process
@@ -3614,6 +3618,7 @@ blocks:
     - b14-while-todo-graph.process
     - b15-for-loop.process
     - b18-while-filled.process
+    - best-screenshots-mail-save.process
     - diag02-start-todo-stop.process
     - diag14-while-empty.process
     internal_name: ToDoBlock
