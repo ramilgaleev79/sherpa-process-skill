@@ -12,6 +12,9 @@
     lint-process FILE…   — то же, что scripts/lint_process.py: ревью чужого
                            .process (дефекты P0/P1/P2). Отдельный скрипт — основной
                            вход (одна логика), подкоманда — для discoverability.
+    flow-diagram FILE [--findings bugs.json] [--out O] [--check]
+                         — HTML-схема .process; с findings — нумерованные баги
+                           (красное где, зелёное как чинить), scripts/flow_diagram.py
 """
 
 from __future__ import annotations
@@ -221,6 +224,26 @@ def cmd_lint_process(files: list[Path], as_json: bool, fail_on: str, limit: int)
     return lint_process.main(argv)
 
 
+def cmd_flow_diagram(process: Path, findings: Path | None, out: Path | None,
+                     title: str | None, check: bool) -> int:
+    """Блок-схема с багами — тонкая делегация в scripts/flow_diagram.py."""
+    try:
+        import flow_diagram          # noqa: PLC0415 — импорт по требованию
+    except Exception as exc:  # noqa: BLE001 — установленная копия без рендерера
+        print(f"FAIL: рендерер недоступен: {type(exc).__name__}: {exc}")
+        return 1
+    argv = [str(process)]
+    if findings:
+        argv += ["--findings", str(findings)]
+    if out:
+        argv += ["--out", str(out)]
+    if title:
+        argv += ["--title", title]
+    if check:
+        argv.append("--check")
+    return flow_diagram.main(argv)
+
+
 def main() -> int:
     utf8_stdio()
     ap = argparse.ArgumentParser(description=__doc__)
@@ -240,6 +263,16 @@ def main() -> int:
     p_lint.add_argument("--json", action="store_true", help="машинный отчёт")
     p_lint.add_argument("--fail-on", choices=["p0", "p1", "none"], default="p0")
     p_lint.add_argument("--limit", type=int, default=12)
+    p_flow = sub.add_parser("flow-diagram",
+                            help="HTML-схема .process; с --findings — нумерованные "
+                                 "баги: красное где, зелёное как чинить")
+    p_flow.add_argument("process", type=Path)
+    p_flow.add_argument("--findings", type=Path, default=None,
+                        help="JSON с багами (references/flow-diagram.md)")
+    p_flow.add_argument("--out", type=Path, default=None)
+    p_flow.add_argument("--title", default=None)
+    p_flow.add_argument("--check", action="store_true",
+                        help="сверить два рендера байт-в-байт")
     args = ap.parse_args()
     if args.cmd == "init-ir":
         return cmd_init_ir(args.file)
@@ -247,6 +280,9 @@ def main() -> int:
         return cmd_build(args.ir_file, args.out_file, args.mode)
     if args.cmd == "lint-process":
         return cmd_lint_process(args.files, args.json, args.fail_on, args.limit)
+    if args.cmd == "flow-diagram":
+        return cmd_flow_diagram(args.process, args.findings, args.out,
+                                args.title, args.check)
     return cmd_validate_ir(args.file, args.profile, args.report)
 
 

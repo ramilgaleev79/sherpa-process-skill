@@ -31,6 +31,7 @@ WHITELIST: list[tuple[str, str]] = [
     ("scripts/edit_spec.py", "scripts/edit_spec.py"),
     ("scripts/process_diff.py", "scripts/process_diff.py"),
     ("scripts/lint_process.py", "scripts/lint_process.py"),
+    ("scripts/flow_diagram.py", "scripts/flow_diagram.py"),
     ("scripts/block_suggest.py", "scripts/block_suggest.py"),
     ("scripts/sherpa_xml", "scripts/sherpa_xml"),
     ("scripts/dev/plan_to_ir.py", "scripts/dev/plan_to_ir.py"),
