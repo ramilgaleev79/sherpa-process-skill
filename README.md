@@ -52,6 +52,7 @@ Golden-файлы, `scripts/dev/`, `schemas/` и доки репозитория
 | Инструмент | Назначение |
 |---|---|
 | `scripts/lint_process.py FILE` | линт чужого `.process`: P0/P1/P2 — секреты, дубли ID, висячие связи, обрывы, выключенные блоки, мёртвый код, блоки вне каталога, версии. Он же — `cli.py lint-process FILE` |
+| `scripts/flow_diagram.py FILE [--findings bugs.json] [--check]` | HTML-блок-схема `.process` (узлы на координатах холста Designer); с findings — все баги одной картинкой: красные номера — где баг, зелёные — как чинить, зелёный пунктир — вставляемый блок. Он же — `cli.py flow-diagram …` |
 | `scripts/structure_audit.py FILE` | GOTO-аудит: классы стрелок, GOTO назад/наружу/вглубь, хабы, глубина, горячие переменные |
 | `scripts/golden_inspector.py FILE --deep` | дамп блока: свойства, порты, Base64-контейнеры |
 | `scripts/change_impact.py FILE --spec spec.json` | радиус правки по спецификации (до записи): структура, хабы, данные, вердикт |
@@ -67,6 +68,10 @@ Golden-файлы, `scripts/dev/`, `schemas/` и доки репозитория
 
 - Ревью: `lint_process` → `structure_audit` → `golden_inspector` для спорных блоков →
   смысл глазами. Чек-лист и шаблон отчёта — `references/reviewing-a-process.md`.
+- Показать найденное наглядно: все баги одним `findings.json` → `flow_diagram
+  --findings` — самодостаточный HTML с канонической нумерацией (на номера можно
+  ссылаться в тикетах; рендер байт-в-байт детерминирован, `--check`).
+  Схема входа — `references/flow-diagram.md`.
 - Правка: `structure_audit` (до) → `change_impact` (радиус) → `apply_spec` (запись) →
   `process_diff --expect` (доказательство). Детали — `references/editing-existing-process.md`.
 
@@ -131,9 +136,10 @@ IR (JSON, агент) ──validate_ir──► отчёт (код/серьёз
 ```text
 SKILL.md            инструкции агента          references/  каталоги + форматы
 scripts/            cli.py + sherpa_xml/ (рантайм, stdlib) + файловые инструменты:
-                    lint_process.py, structure_audit.py, golden_inspector.py,
-                    change_impact.py, apply_spec.py, edit_spec.py, process_diff.py,
-                    block_suggest.py; dev/ — инструменты репо (venv); install_skill.py
+                    lint_process.py, flow_diagram.py, structure_audit.py,
+                    golden_inspector.py, change_impact.py, apply_spec.py,
+                    edit_spec.py, process_diff.py, block_suggest.py;
+                    dev/ — инструменты репо (venv); install_skill.py
 assets/             golden-шаблоны блоков + block_index + verb_block_index
 schemas/            sherpa-rules.sch (dev-аудит)  golden/ эталоны + manifest.yaml
 tests/              pytest; fixtures/evals/ — пары «задача → план → эталон»
