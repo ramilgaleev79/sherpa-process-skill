@@ -24,7 +24,9 @@ jobs:
       - name: Инсталлятор (smoke)
         run: python scripts/install_skill.py --dry-run
       - name: Секреты в golden/эталонах (P0 быть не должно)
-        run: python scripts/lint_process.py golden/real/*.process golden/project/*.process --fail-on p0 --limit 0
+        run: |
+          shopt -s nullglob
+          python scripts/lint_process.py golden/real/*.process golden/project/*.process --fail-on p0 --limit 0
       - name: Корпоративные идентификаторы отсутствуют
         run: >
           ! grep -riniE "delrus|дельрус" --include="*.py" --include="*.md"
