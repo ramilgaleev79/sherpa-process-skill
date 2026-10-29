@@ -13,6 +13,11 @@
     structural    : базовая структура XML, обязательные атрибуты, коннекторы, шаблоны блоков
     semantic-lite : только те проверки, которые можно сделать без декодирования и без PowerShell AST
     strict        : structural + semantic-lite, для release-профиля
+
+    СТАТУС (2026-10-16): dev-аудит, не норматив. Правила валидации живут
+    в scripts/sherpa_xml/validator.py (коды SEM-*/SHP-*); этот файл НЕ обязан
+    синхронизироваться с ними правило-в-правило. Прогон (scripts/dev/run_schematron.py,
+    SaxonC) — опциональная перекрёстная проверка при ingest нового golden.
   -->
 
   <sch:phase id="structural">
@@ -371,16 +376,16 @@
 
   <sch:pattern id="condition-rules">
 
-    <sch:rule context="//*[local-name()='ToolboxItemSettings'][@InternalName='IfElse']">
-      <sch:assert test="@Version='23'">
-        SHP-COND-002 ERROR: подтверждённая версия IfElse должна быть 23.
+    <sch:rule context="//*[local-name()='ToolboxItemSettings'][@InternalName='IfCondition']">
+      <sch:assert test="@Version='46'">
+        SHP-COND-002 ERROR: подтверждённая версия IfCondition должна быть 46.
       </sch:assert>
       <sch:assert test="count(.//*[local-name()='Property'][@Name='Condition']) = 1">
         SHP-COND-003 ERROR: блок Condition должен содержать свойство Condition.
       </sch:assert>
     </sch:rule>
 
-    <sch:rule context="//*[local-name()='ToolboxItemSettings'][@InternalName='IfElse']//*[local-name()='Property'][@Name='Condition']">
+    <sch:rule context="//*[local-name()='ToolboxItemSettings'][@InternalName='IfCondition']//*[local-name()='Property'][@Name='Condition']">
       <sch:assert test="@Type='Expression'">
         SHP-COND-004 ERROR: Condition/@Type должен быть Expression.
       </sch:assert>
@@ -395,15 +400,15 @@
       </sch:assert>
     </sch:rule>
 
-    <sch:rule context="//*[local-name()='ToolboxItemSettings'][@InternalName='IfElse']">
+    <sch:rule context="//*[local-name()='ToolboxItemSettings'][@InternalName='IfCondition']">
       <sch:assert test="count(.//*[local-name()='Connector'][@Name='Yes']) &gt;= 1">
-        SHP-COND-007 ERROR: блок IfElse должен иметь выход Yes.
+        SHP-COND-007 ERROR: блок IfCondition должен иметь выход Yes.
       </sch:assert>
       <sch:assert test="count(.//*[local-name()='Connector'][@Name='No']) &gt;= 1">
-        SHP-COND-007 ERROR: блок IfElse должен иметь выход No.
+        SHP-COND-007 ERROR: блок IfCondition должен иметь выход No.
       </sch:assert>
       <sch:assert test="count(.//*[local-name()='Connector'][@Name='Next']) = 0">
-        SHP-COND-010 ERROR: у блока IfElse не должно быть обычного выхода Next.
+        SHP-COND-010 ERROR: у блока IfCondition не должно быть обычного выхода Next.
       </sch:assert>
     </sch:rule>
 

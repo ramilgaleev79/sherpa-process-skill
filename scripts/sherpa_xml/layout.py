@@ -19,22 +19,59 @@ SPACING_Y = 140
 
 
 def _longest_path_levels(nodes: list[dict], edges: list[dict]) -> dict[str, int]:
-    """Уровень узла = длина самого длинного пути от Start (Start = 0)."""
-    incoming: dict[str, list[str]] = defaultdict(list)
+    """Уровень узла = длина самого длинного пути от Start (Start = 0).
+
+    Циклы в графе штатны (тело → заголовок цикла). Наивный Kahn на них
+    останавливается и оставляет все узлы на уровне 0. Поэтому сначала DFS
+    помечает back-edge, затем уровни считаются по DAG без этих рёбер.
+    """
+    by_key = {n["key"]: n for n in nodes}
+    adj: dict[str, list[tuple[int, dict]]] = defaultdict(list)
+    for idx, e in enumerate(edges):
+        adj[e["from"]].append((idx, e))
+
+    back_edges: set[int] = set()
+    color: dict[str, int] = {}  # 1 — серый, 2 — чёрный
+
+    def dfs(start: str) -> None:
+        stack = [(start, 0)]
+        color[start] = 1
+        while stack:
+            cur, pos = stack[-1]
+            if pos >= len(adj[cur]):
+                color[cur] = 2
+                stack.pop()
+                continue
+            stack[-1] = (cur, pos + 1)
+            idx, e = adj[cur][pos]
+            nxt = e["to"]
+            if nxt not in by_key:
+                continue
+            state = color.get(nxt, 0)
+            if state == 1:
+                back_edges.add(idx)
+            elif state == 0:
+                color[nxt] = 1
+                stack.append((nxt, 0))
+
+    for n in nodes:
+        if color.get(n["key"], 0) == 0:
+            dfs(n["key"])
+
     indeg: dict[str, int] = {n["key"]: 0 for n in nodes}
-    for e in edges:
-        incoming[e["to"]].append(e["from"])
-        indeg[e["to"]] += 1
+    for idx, e in enumerate(edges):
+        if idx not in back_edges and e["to"] in indeg:
+            indeg[e["to"]] += 1
     level = {n["key"]: 0 for n in nodes}
     queue = deque(n["key"] for n in nodes if indeg[n["key"]] == 0)
-    # Kahn; для циклов (While→body→While) уровень фиксируется по первому проходу —
-    # детерминированно, т.к. порядок очереди задан порядком узлов в IR.
     while queue:
         cur = queue.popleft()
-        for e in edges:
-            if e["from"] != cur:
+        for idx, e in adj[cur]:
+            if idx in back_edges:
                 continue
             nxt = e["to"]
+            if nxt not in level:
+                continue
             level[nxt] = max(level[nxt], level[cur] + 1)
             indeg[nxt] -= 1
             if indeg[nxt] == 0:

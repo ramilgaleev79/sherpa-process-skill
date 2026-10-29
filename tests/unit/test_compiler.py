@@ -228,3 +228,33 @@ def test_display_name_for_any_node():
             assert inner.get("DisplayName") == "$Index -gt 2"
             return
     raise AssertionError("IfCondition не найден")
+
+
+def test_invoke_expression_typed_path():
+    d = dict(MINIMAL)
+    d["nodes"] = [
+        {"key": "s", "type": "Start"},
+        {"key": "ie", "type": "InvokeExpression",
+         "expression": {"kind": "powershell", "value": "Get-Date -Format o"}},
+        {"key": "e", "type": "Stop"},
+    ]
+    d["edges"] = [{"from": "s", "to": "ie"}, {"from": "ie", "to": "e"}]
+    _, root = _compile(d)
+    contents = [c.text for c in root.findall("DesignerItems/DesignerItem/Content")]
+    assert any("Get-Date -Format o" in c for c in contents)
+
+
+def test_properties_cannot_override_typed_fields():
+    d = dict(MINIMAL)
+    d["nodes"] = [
+        {"key": "s", "type": "Start"},
+        {"key": "c", "type": "Condition",
+         "condition": {"kind": "compare", "operator": "eq",
+                       "left": {"kind": "number_literal", "value": 1},
+                       "right": {"kind": "number_literal", "value": 1}},
+         "properties": {"Condition": "1 -eq 1"}},
+        {"key": "e", "type": "Stop"},
+    ]
+    d["edges"] = [{"from": "s", "to": "c"}, {"from": "c", "from_port": "Yes", "to": "e"}]
+    with pytest.raises(compiler.CompileError, match="типизированное"):
+        _compile(d)

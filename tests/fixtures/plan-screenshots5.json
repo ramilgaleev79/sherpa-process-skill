@@ -1,0 +1,49 @@
+{
+  "process": {"name": "ScreenshotsMailSave"},
+  "variables": [
+    {"name": "Индекс", "sherpa_type": "Number", "initial": 0},
+    {"name": "ФайлСкриншота", "sherpa_type": "Text", "initial": ""},
+    {"name": "ПапкаСохранения", "sherpa_type": "Text", "initial": ""},
+    {"name": "ПутьСохранения", "sherpa_type": "Text", "initial": ""},
+    {"name": "SMTPСервер", "sherpa_type": "Text", "initial": ""},
+    {"name": "SMTPПорт", "sherpa_type": "Number", "initial": 0},
+    {"name": "SMTPЛогин", "sherpa_type": "Text", "initial": ""},
+    {"name": "SMTPПароль", "sherpa_type": "SecureString", "initial": ""},
+    {"name": "ПочтаОт", "sherpa_type": "Text", "initial": ""},
+    {"name": "ПочтаКому", "sherpa_type": "Text", "initial": ""},
+    {"name": "ТемаПисьма", "sherpa_type": "Text", "initial": ""},
+    {"name": "ТекстПисьма", "sherpa_type": "Text", "initial": ""}
+  ],
+  "steps": [
+    {"id": "loop", "quote": "5 скриншотов", "type": "repeat", "kind": "for",
+     "start": 1, "end": 5, "index": "Индекс",
+     "body": [
+       {"id": "shot", "quote": "сделать скриншот", "type": "action", "block": "MakeScreenshot",
+        "props": {"FileName": "$ФайлСкриншота", "ScreenshotFile": "$ФайлСкриншота"}},
+       {"id": "is3", "quote": "третий — почтой", "type": "condition",
+        "expr": {"kind": "compare", "operator": "eq",
+                 "left": {"kind": "variable_reference", "variable": "Индекс"},
+                 "right": {"kind": "number_literal", "value": 3}},
+        "then": [
+          {"id": "mail", "quote": "отправить по почте", "type": "action", "block": "SendMailMessage",
+           "props": {"Server": "$SMTPСервер", "Port": "$SMTPПорт", "Login": "$SMTPЛогин",
+                     "Password": "$SMTPПароль", "MailFrom": "$ПочтаОт", "MailTo": "$ПочтаКому",
+                     "Subject": "$ТемаПисьма", "Body": "$ТекстПисьма", "Attachments": "$ФайлСкриншота"}}
+        ]},
+       {"id": "is45", "quote": "4 и 5 — на диск", "type": "condition",
+        "expr": {"kind": "compare", "operator": "ge",
+                 "left": {"kind": "variable_reference", "variable": "Индекс"},
+                 "right": {"kind": "number_literal", "value": 4}},
+        "then": [
+          {"id": "path", "quote": "построить путь сохранения", "type": "action", "tech": true,
+           "block": "GetPathFileName",
+           "props": {"Path": "$ПапкаСохранения", "FileName": "\"screenshot.png\"",
+                     "AutoIndex": "True", "Result": "$ПутьСохранения"}},
+          {"id": "copy", "quote": "сохранить на диск", "type": "action", "block": "CopyItem",
+           "props": {"SourcePath": "$ФайлСкриншота", "DestinationPath": "$ПутьСохранения"}}
+        ]}
+     ]},
+    {"id": "log", "quote": "записать итог в лог", "type": "action", "block": "Log",
+     "props": {"Value": "\"готово\""}}
+  ]
+}

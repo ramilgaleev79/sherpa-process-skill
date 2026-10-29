@@ -1,0 +1,82 @@
+{
+ "format": "sherpa-graph-profile/1",
+ "source": "main.process (верхний уровень, depth=0)",
+ "types": {
+  "Delay": 1,
+  "IfCondition": 1,
+  "Log": 2,
+  "ProcessContainer": 2,
+  "ReturnOrStop": 1,
+  "Start": 1,
+  "TryCatchContainer": 1
+ },
+ "edges": [
+  [
+   "Delay",
+   "Next",
+   "TryCatchContainer",
+   "Input"
+  ],
+  [
+   "IfCondition",
+   "No",
+   "ProcessContainer",
+   "InputLeft"
+  ],
+  [
+   "IfCondition",
+   "Yes",
+   "ProcessContainer",
+   "Input"
+  ],
+  [
+   "Log",
+   "Next",
+   "Delay",
+   "Input"
+  ],
+  [
+   "Log",
+   "Next",
+   "ReturnOrStop",
+   "InputLeft"
+  ],
+  [
+   "ProcessContainer",
+   "Error",
+   "ProcessContainer",
+   "InputLeft"
+  ],
+  [
+   "ProcessContainer",
+   "Next",
+   "Log",
+   "Input"
+  ],
+  [
+   "Start",
+   "Next",
+   "Log",
+   "Input"
+  ],
+  [
+   "TryCatchContainer",
+   "Error",
+   "IfCondition",
+   "InputLeft"
+  ],
+  [
+   "TryCatchContainer",
+   "Out",
+   "Log",
+   "InputLeft"
+  ]
+ ],
+ "stats": {
+  "nodes": 9,
+  "edges": 10,
+  "comments": 0,
+  "kept_blocks": 9,
+  "all_blocks": 218
+ }
+}

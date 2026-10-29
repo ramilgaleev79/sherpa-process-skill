@@ -1,0 +1,365 @@
+{
+ "meta": {
+  "generated_by": "scripts/dev/build_verb_index.py",
+  "corpora": [
+   {
+    "name": "golden\\real",
+    "processes": 22
+   },
+   {
+    "name": "OCR",
+    "processes": 8
+   },
+   {
+    "name": "Designer/Library",
+    "processes": 65
+   },
+   {
+    "name": "Sherpa RPA/Frameworks",
+    "processes": 12
+   },
+   {
+    "name": "Sherpa RPA/Projects",
+    "processes": 61
+   }
+  ],
+  "processes": 168,
+  "blocks": 2596,
+  "verbs": 32,
+  "min_count": 1,
+  "note": "глагол → блок по DisplayName реальных процессов (сильный слой corpus_mine); подсказка, а не автоподстановка"
+ },
+ "verbs": {
+  "выбрать": {
+   "nodes": 5,
+   "documents": 1,
+   "confidence": 0.4,
+   "blocks": {
+    "CollapseContainer": 2,
+    "HtmlSelectSingleNode": 2,
+    "HtmlSelectNodes": 1
+   }
+  },
+  "выгрузить": {
+   "nodes": 2,
+   "documents": 0,
+   "confidence": 1.0,
+   "blocks": {
+    "TelegramClientGetMessages": 2
+   }
+  },
+  "выполнить": {
+   "nodes": 91,
+   "documents": 2,
+   "confidence": 0.85,
+   "blocks": {
+    "InvokeExpression": 77,
+    "InternalBrowserRequest": 5,
+    "1CExecuteCode": 2,
+    "DatabaseExecuteQuery": 2,
+    "ProcessContainer": 2
+   }
+  },
+  "загрузить": {
+   "nodes": 18,
+   "documents": 0,
+   "confidence": 0.56,
+   "blocks": {
+    "LoadDataTable": 10,
+    "LoadCSVDataTable": 5,
+    "ListLoadFromFile": 1,
+    "OrchGetSettingsProject": 1,
+    "UploadFTPFile": 1
+   }
+  },
+  "закодировать": {
+   "nodes": 2,
+   "documents": 0,
+   "confidence": 1.0,
+   "blocks": {
+    "ToBase64": 2
+   }
+  },
+  "закрыть": {
+   "nodes": 44,
+   "documents": 1,
+   "confidence": 0.25,
+   "blocks": {
+    "CloseWordDocument": 11,
+    "CloseExcelDocument": 9,
+    "CloseInternet": 6,
+    "RDPCloseConnection": 6,
+    "CloseApp": 4
+   }
+  },
+  "записать": {
+   "nodes": 50,
+   "documents": 0,
+   "confidence": 0.4,
+   "blocks": {
+    "SetCellValue": 20,
+    "FileWrite": 13,
+    "SetExcelCellValue": 13,
+    "SetGoogleSheetsCellValue": 1,
+    "WriteValueToRegistry": 1
+   }
+  },
+  "запустить": {
+   "nodes": 37,
+   "documents": 2,
+   "confidence": 0.41,
+   "blocks": {
+    "LaunchChrome": 15,
+    "LaunchApp": 8,
+    "StartBackgroundRobot": 5,
+    "LaunchBrowser": 4,
+    "StartProcess": 4
+   }
+  },
+  "извлечь": {
+   "nodes": 14,
+   "documents": 4,
+   "confidence": 0.64,
+   "blocks": {
+    "CollectDataInternet": 9,
+    "GetDataTableRange": 2,
+    "PDFExtractTables": 2,
+    "ExtractImages": 1
+   }
+  },
+  "копировать": {
+   "nodes": 10,
+   "documents": 0,
+   "confidence": 0.7,
+   "blocks": {
+    "ProcessContainer": 7,
+    "CopyItem": 1,
+    "SetClipboard": 1,
+    "SetFilesClipboard": 1
+   }
+  },
+  "нажать": {
+   "nodes": 33,
+   "documents": 1,
+   "confidence": 0.64,
+   "blocks": {
+    "PressKeys": 21,
+    "PressKeysInternet": 10,
+    "SAPPressEnter": 2
+   }
+  },
+  "найти": {
+   "nodes": 12,
+   "documents": 0,
+   "confidence": 0.5,
+   "blocks": {
+    "FindTextBetween": 6,
+    "FindRow": 3,
+    "SelectRows": 2,
+    "OpenAISearchEmbeddings": 1
+   }
+  },
+  "объединить": {
+   "nodes": 1,
+   "documents": 0,
+   "confidence": 1.0,
+   "blocks": {
+    "MergeDocument": 1
+   }
+  },
+  "остановить": {
+   "nodes": 2,
+   "documents": 0,
+   "confidence": 1.0,
+   "blocks": {
+    "StopProcess": 2
+   }
+  },
+  "открыть": {
+   "nodes": 20,
+   "documents": 0,
+   "confidence": 0.5,
+   "blocks": {
+    "OpenWordDocument": 10,
+    "OpenExcelDocument": 8,
+    "OpenFileDialog": 2
+   }
+  },
+  "отправить": {
+   "nodes": 19,
+   "documents": 0,
+   "confidence": 0.53,
+   "blocks": {
+    "SendMailMessage": 10,
+    "TelegramClientSendText": 3,
+    "TelegramBotSendText": 2,
+    "MaxSendMessageToChat": 1,
+    "SherpaAISendMessage": 1
+   }
+  },
+  "переименовать": {
+   "nodes": 7,
+   "documents": 0,
+   "confidence": 0.71,
+   "blocks": {
+    "RenameItem": 5,
+    "RenameColumn": 2
+   }
+  },
+  "повторить": {
+   "nodes": 1,
+   "documents": 0,
+   "confidence": 1.0,
+   "blocks": {
+    "IfCondition": 1
+   }
+  },
+  "подключиться": {
+   "nodes": 5,
+   "documents": 0,
+   "confidence": 0.4,
+   "blocks": {
+    "1CCreateConnection": 2,
+    "DatabaseCreateConnection": 2,
+    "RDPConnectInstance": 1
+   }
+  },
+  "получить": {
+   "nodes": 100,
+   "documents": 4,
+   "confidence": 0.38,
+   "blocks": {
+    "GetPathFileName": 38,
+    "GetExcelCellValue": 13,
+    "GetItems": 4,
+    "GetPageTextOCR": 4,
+    "GetUITextInternet": 3
+   }
+  },
+  "преобразовать": {
+   "nodes": 12,
+   "documents": 0,
+   "confidence": 0.33,
+   "blocks": {
+    "DateTimeToString": 4,
+    "DateTimeFromString": 3,
+    "FromJson": 2,
+    "ToJson": 2,
+    "TransformString": 1
+   }
+  },
+  "проверить": {
+   "nodes": 24,
+   "documents": 1,
+   "confidence": 0.38,
+   "blocks": {
+    "DoesItemExist": 9,
+    "ContainsValue": 4,
+    "ElementExists": 2,
+    "ElementExistsInternet": 2,
+    "ListContains": 2
+   }
+  },
+  "распаковать": {
+   "nodes": 2,
+   "documents": 0,
+   "confidence": 1.0,
+   "blocks": {
+    "ExtractArchive": 2
+   }
+  },
+  "распознать": {
+   "nodes": 5,
+   "documents": 1,
+   "confidence": 0.6,
+   "blocks": {
+    "OCRImage": 3,
+    "GetOCRText": 1,
+    "RecognizeTemplates": 1
+   }
+  },
+  "сделать": {
+   "nodes": 1,
+   "documents": 0,
+   "confidence": 1.0,
+   "blocks": {
+    "ToDoBlock": 1
+   }
+  },
+  "скачать": {
+   "nodes": 5,
+   "documents": 0,
+   "confidence": 0.2,
+   "blocks": {
+    "DownloadFTPFile": 1,
+    "MaxDownloadFile": 1,
+    "SaveAttachment": 1,
+    "TelegramBotDownloadFile": 1,
+    "TelegramClientDownloadFile": 1
+   }
+  },
+  "соединить": {
+   "nodes": 7,
+   "documents": 0,
+   "confidence": 0.57,
+   "blocks": {
+    "MergeDataTable": 4,
+    "JoinString": 3
+   }
+  },
+  "создать": {
+   "nodes": 25,
+   "documents": 2,
+   "confidence": 0.24,
+   "blocks": {
+    "NewFolder": 6,
+    "NewTextFile": 4,
+    "SAPCreateConnection": 3,
+    "CreateExcelDocument": 2,
+    "CreateWordDocument": 2
+   }
+  },
+  "сохранить": {
+   "nodes": 38,
+   "documents": 6,
+   "confidence": 0.29,
+   "blocks": {
+    "SaveDataTable": 11,
+    "SaveWordDocument": 11,
+    "SaveExcelDocument": 7,
+    "SaveCSVDataTable": 6,
+    "SaveMailMessage": 1
+   }
+  },
+  "считать": {
+   "nodes": 18,
+   "documents": 0,
+   "confidence": 0.89,
+   "blocks": {
+    "FileRead": 16,
+    "FileLineRead": 1,
+    "GetTablesWordDocument": 1
+   }
+  },
+  "удалить": {
+   "nodes": 30,
+   "documents": 1,
+   "confidence": 0.27,
+   "blocks": {
+    "RemoveItem": 8,
+    "ListRemoveDuplicates": 5,
+    "RemoveColumn": 5,
+    "OrchRemoveLogFields": 3,
+    "RemoveRow": 3
+   }
+  },
+  "установить": {
+   "nodes": 7,
+   "documents": 2,
+   "confidence": 1.0,
+   "blocks": {
+    "ProcessContainer": 7
+   }
+  }
+ }
+}

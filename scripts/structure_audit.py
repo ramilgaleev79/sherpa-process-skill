@@ -30,6 +30,8 @@ import xml.etree.ElementTree as ET
 from collections import defaultdict
 from pathlib import Path
 
+from sherpa_xml.console import utf8_stdio
+
 BODY_PORT = {
     "TryCatchContainer": "Next", "CollapseContainer": "Next",
     "ForeachList": "Item", "ForeachRows": "Row", "For": "Index", "While": "Iteration",
@@ -47,19 +49,24 @@ WRITE_PROP = re.compile(
     r"CalledTools|ProcessID|PathUnpack|Row[\w]*|Item[\w]*|Index)$"
 )
 SKIP_PROP = {"ErrorLevel", "ReportLevel", "ErrorDirection", "SendOrkest", "IsScreenshot"}
-VAR_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)")
+# Имена переменных Sherpa — Unicode; кириллица ($Индекс, $Файл) обязательна.
+VAR_RE = re.compile(r"\$([A-Za-zА-Яа-яЁё_][A-Za-zА-Яа-яЁё0-9_]*)")
 IGNORE_VARS = {"env", "true", "false", "null", "_", "Error", "args", "input", "PSItem", "this"}
 
 
-def _props(inner: ET.Element) -> dict[str, str]:
+def _props(inner: ET.Element) -> tuple[dict[str, str], dict[str, str]]:
+    """Значения свойств + CatalogName (Output — это запись переменной)."""
     out: dict[str, str] = {}
+    catalog: dict[str, str] = {}
     for child in inner:
         if not child.tag.endswith("ToolboxItemSettings.Properties"):
             continue
         for coll in child:
             for prop in coll:
-                out[prop.get("Name") or ""] = prop.get("Value") or ""
-    return out
+                name = prop.get("Name") or ""
+                out[name] = prop.get("Value") or ""
+                catalog[name] = prop.get("CatalogName") or ""
+    return out, catalog
 
 
 def load(path: Path) -> tuple[dict, list]:
@@ -69,12 +76,14 @@ def load(path: Path) -> tuple[dict, list]:
     items = root.find("DesignerItems")
     for it in items if items is not None else []:
         inner = ET.fromstring(it.findtext("Content"))
+        props, catalog = _props(inner)
         blocks[it.findtext("ID")] = {
             "id": it.findtext("ID"),
             "internal": inner.get("InternalName"),
             "display": (inner.get("DisplayName") or "").replace("\n", " "),
             "enabled": (it.findtext("IsEnabled") or "true").lower() != "false",
-            "props": _props(inner),
+            "props": props,
+            "prop_catalog": catalog,
         }
     edges = []
     conns = root.find("Connections")
@@ -123,10 +132,13 @@ def defuse(blocks: dict) -> tuple[dict, dict]:
     writes: dict[str, set] = defaultdict(set)
     reads: dict[str, set] = defaultdict(set)
     for b, meta in blocks.items():
+        catalogs = meta.get("prop_catalog", {})
         for name, value in meta["props"].items():
             if not value or name in SKIP_PROP:
                 continue
-            if WRITE_PROP.match(name):
+            # CatalogName=Output — штатный write-порт блока (ScreenshotFile, SentEmail,
+            # Result, Row, Item…), даже если имя не попало в WRITE_PROP.
+            if catalogs.get(name) == "Output" or WRITE_PROP.match(name):
                 for v in VAR_RE.findall(value):
                     writes[v].add(b)
             else:
@@ -136,17 +148,52 @@ def defuse(blocks: dict) -> tuple[dict, dict]:
     return writes, reads
 
 
+def _reachable_from(start: str | None, edges: list, blocks: dict, stop: str | None = None) -> set[str]:
+    """Достижимые блоки от start без захода в stop; только известные ID."""
+    if start is None or start not in blocks:
+        return set()
+    seen: set[str] = set()
+    stack = [start]
+    while stack:
+        cur = stack.pop()
+        if cur == stop or cur in seen or cur not in blocks:
+            continue
+        seen.add(cur)
+        for s, _sp, t, _tp in edges:
+            if s == cur and t not in seen:
+                stack.append(t)
+    return seen
+
+
 def model(blocks: dict, edges: list) -> dict:
-    """Полная модель графа: доминаторы, владельцы контейнеров, классы стрелок, хабы."""
+    """Полная модель графа: владельцы контейнеров, классы стрелок, хабы."""
     dom, reach = dominators(blocks, edges)
     name = lambda b: blocks[b]["internal"] or ""
 
     containers = [b for b in reach if name(b) in BODY_PORT]
-    body = {c: {b for b in reach if b != c and c in dom[b]} for c in containers}
+
+    # Тело контейнера — достижимое от его body-порта МИНУС всё, что достижимо
+    # от выходов (Next/Out/Error). Одних доминаторов недостаточно: при одном
+    # выходе контейнер доминирует и весь код после него.
+    body: dict[str, set[str]] = {}
+    for c in containers:
+        cname = name(c)
+        entry = next((t for s, p, t, _tp in edges if s == c and p == BODY_PORT[cname]), None)
+        exits = {
+            t for s, p, t, _tp in edges
+            if s == c and (p == EXIT_PORT.get(cname) or p == "Error")
+        }
+        after: set[str] = set()
+        for ex in exits:
+            after |= _reachable_from(ex, edges, blocks)
+        body[c] = _reachable_from(entry, edges, blocks, stop=c) - after - {c}
+
+    # Глубина контейнера = сколько других контейнеров содержат его в своём теле.
+    container_depth = {c: sum(1 for d in containers if c in body[d]) for c in containers}
 
     def owner_of(b: str):
         cands = [c for c in containers if b in body[c]]
-        return max(cands, key=lambda c: len(dom.get(c, ()))) if cands else None
+        return max(cands, key=lambda c: container_depth[c]) if cands else None
 
     owners = {b: owner_of(b) for b in reach}
 
@@ -190,7 +237,11 @@ def model(blocks: dict, edges: list) -> dict:
     in_deg: dict[str, int] = defaultdict(int)
     for s, _sp, t, _tp in edges:
         if s in reach and t in reach:
-            inbound[t].add(owners.get(s))
+            owner = owners.get(s)
+            # возврат из тела в свой же контейнер — не «вход из другого контекста»
+            if owner == t:
+                continue
+            inbound[t].add(owner)
             out_deg[s] += 1
             in_deg[t] += 1
     hubs = {b: {o or "" for o in owners_set} for b, owners_set in inbound.items()
@@ -209,7 +260,7 @@ def model(blocks: dict, edges: list) -> dict:
 
     depth: dict[int, int] = defaultdict(int)
     for b in reach:
-        depth[len([c for c in containers if c in dom[b]])] += 1
+        depth[sum(1 for c in containers if b in body[c])] += 1
 
     writes, reads = defuse(blocks)
 
@@ -309,6 +360,7 @@ def report(info: dict) -> None:
 
 
 def main() -> int:
+    utf8_stdio()
     ap = argparse.ArgumentParser(description="Аудит структуры .process (GOTO-стрелки, хабы, глубина)")
     ap.add_argument("files", nargs="+")
     ap.add_argument("--json", action="store_true", help="машинный вывод")

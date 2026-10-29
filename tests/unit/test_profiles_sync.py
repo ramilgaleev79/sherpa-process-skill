@@ -32,3 +32,8 @@ def test_runtime_codes_documented_in_yaml():
     runtime = profiles.FORBIDDEN["release"] | profiles.FORBIDDEN["strict"]
     undocumented = runtime - yaml_all
     assert not undocumented, f"коды profiles.py не описаны в yaml: {undocumented}"
+
+
+def test_strict_is_superset_of_release():
+    # выпускной профиль не может пропускать ошибки более мягкого (структурная гарантия)
+    assert profiles.FORBIDDEN["release"] <= profiles.FORBIDDEN["strict"]

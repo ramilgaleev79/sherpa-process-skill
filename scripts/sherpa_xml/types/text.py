@@ -38,6 +38,9 @@ def ps_literal(raw: str) -> str:
             out.append("``")
         elif ch == '"':
             out.append('`"')
+        elif ch == "$":
+            # Двойные кавычки PowerShell интерполируют $; для литерала нужен `$.
+            out.append("`$")
         elif ch in "\n\r":
             out.append("`n")
         else:
@@ -61,7 +64,7 @@ def ps_unliteral(literal: str) -> str:
             nxt = body[i + 1]
             if nxt == "n":
                 out.append("\n")
-            elif nxt in ("`", '"'):
+            elif nxt in ("`", '"', "$"):
                 out.append(nxt)
             else:  # неизвестный escape — сохраняем как есть (writer такие не создаёт)
                 out.append(ch + nxt)
@@ -115,8 +118,8 @@ def encode(raw: str) -> str:
     return base64.b64encode(payload).decode("ascii")
 
 
-def decode(container: str) -> str:
-    """Base64-контейнер → сырая строка; строгая проверка структуры (SEM-SER)."""
+def _read_payload(container: str) -> str:
+    """Base64-контейнер → payload (строка внутри, ещё не разобранная как PS-литерал)."""
     try:
         raw = base64.b64decode(container, validate=True)
     except Exception as exc:
@@ -131,7 +134,26 @@ def decode(container: str) -> str:
     if len(literal_bytes) != length:
         raise ValueError(f"длина не совпадает: заявлено {length}, фактических {len(literal_bytes)}")
     try:
-        literal = literal_bytes.decode("utf-8")
+        return literal_bytes.decode("utf-8")
     except UnicodeDecodeError as exc:
         raise ValueError(f"UTF-8 payload не читается: {exc}") from exc
-    return ps_unliteral(literal)
+
+
+def decode(container: str) -> str:
+    """Base64-контейнер → сырая строка; строгая проверка структуры (SEM-SER)."""
+    return ps_unliteral(_read_payload(container))
+
+
+def decode_lenient(container: str) -> str:
+    """Base64-контейнер → сырая строка, толерантно к форме payload.
+
+    Designer пишет payload в двух видах (проверено на 211 `.process`, 260 значений):
+    PS-литерал `"текст"` (252 случая) и «сырые» байты без кавычек (4 случая —
+    `C:\\...\\file1.txt`, `A`, GUID-подобный токен, пустая строка). Строгий `decode`
+    на «сырых» падает; этот вариант возвращает payload как есть.
+    """
+    payload = _read_payload(container)
+    try:
+        return ps_unliteral(payload)
+    except ValueError:
+        return payload

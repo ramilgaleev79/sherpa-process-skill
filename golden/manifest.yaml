@@ -17,8 +17,46 @@ Foreach*/ProcessContainer/Comment/FromJson/SplitString/LoadDataTable/OpenFileDia
 - Блок = `DesignerItem` с полями в порядке: `Left, Top, Width, Height, ID (GUID), zIndex, IsGroup, IsEnabled, Description, IsPSVerified, ParentID, StorageSelectors, Content`.
 - `Content` — экранированный XAML `ToolboxItemSettings` (namespace `{clr-namespace:ToolboxDesigner.Core;assembly=DiagramDesigner}`): атрибуты шаблона + `PathStyle`/`PathStyle_DragThumb` (XAML-визуал) + `Properties` (`PropertiesCollection` → `Property`: Name, Tooltip, CatalogName, Type, Value, Visible, DefaultValue, ValueType, EnumVariants, Caption, ProtoName, ReadOnly, IsRequired, IsPSVerified) + `ConnectorsSettings` (`ConnectorsSettingsCollection` → `ConnectorSettings`: Name, Orientation, RelativePosition, MaxInConnections, MaxOutConnections, Color, Caption).
 - Ребро графа = `Connections/Connection` с полями: `SourceID, SinkID, SourceConnectorName, SinkConnectorName, SourceArrowSymbol, SinkArrowSymbol, zIndex`.
-- У каждого блока 4 общих свойства Error processing: `ErrorLevel` (Enum Default;Ignore;Handle), `ErrorDirection` (Enum Default;Right;Bottom), `ReportLevel` (Enum Default;Release;Debug;Detailed;Output), `ErrorMessage` (Variable, `$ErrorMessage`).
+- Error processing **не универсален**. В 50 golden полный набор из четырёх свойств (`ErrorLevel`, `ErrorDirection`, `ReportLevel`, `ErrorMessage`) есть только у 6 блоков; `ErrorLevel`/`ReportLevel` — у 44, `ErrorMessage` — у 43, `ErrorDirection` — у 7. В текущем каталоге 752: `ErrorLevel` 737, `ReportLevel` 738, `ErrorMessage` 736, `ErrorDirection` 37; у `Comment`/`PointConnector`/`ToDoBlock` свойств нет, у 14 блоков нет ни одного из четырёх. Типы/варианты — `ErrorLevel` (Enum Default;Ignore;Handle), `ErrorDirection` (Enum Default;Right;Bottom), `ReportLevel` (Enum Default;Release;Debug;Detailed;Output), `ErrorMessage` (Variable, `$ErrorMessage`).
 - Статического Error-коннектора нет ни у While, ни у IfCondition (в этой версии).
+
+## Провенанс формата: IL-verified против Designer 1.4.4.40199 (2026-10-27)
+
+Статическим разбором DiagramDesigner.exe сборки **1.4.4.40199**
+(sha256 `564a0e77be0375bbc6f01986342a53cfe5b0164926e4158ed7546e877be7b092`,
+MVID `12d13942-7398-440f-b9f5-932531dd44e1`, evidence `ev_362fbcd2…`/`ev_c24d01ac…`,
+IL-листинги — карта Sherpa RPA, `rea-l3/il-designer-serialize.txt` и
+`rea-l3/il-designer-load-check.txt`) подтверждено, что golden-факты выше —
+не совпадения корпуса, а поведение кода:
+
+- Сериализация: `DiagramViewModel::SerializeDiagram` (LINQ to XML, литеральные
+  теги) — порядок секций Root и состав полей `DesignerItem`/`Connection`
+  ровно как в этом манифесте; `Content = XamlWriter.Save(ToolboxItemSettings)`.
+- Загрузка: `ClassSystem::DeserializeDesignerItem` — `Content → RemoveAllStyles
+  → XmlReader → XamlReader.Load`; поля читаются с дефолтами (IsEnabled/IsPSVerified
+  по умолчанию True, Width/Height InvariantCulture, ParentID Guid), т.е.
+  отсутствующее поле — допустимо. Стили при загрузке вырезаются: `PathStyle`
+  в файлах не требуется.
+- Дизайнерский рефакторинг выражений: `ClassRefactoringExpression125::Processed`
+  — построчно, вне кавычек `"`/`'`, директивы `#stoprefactoring`/
+  `#startrefactoring` (TrimStart+ToLower+Trim) переключают обработку.
+  Семантика реализована в `scripts/sherpa_xml/designer_refactor.py`
+  (операция `rename_variables`).
+- Save-gate Designer (`CheckBlocksProcess`) узок: проверяет только ссылки
+  вложенных диаграмм у `ProcessContainer` (GetNestedDiagramName + FileInfo.Exists
+  + AddLinkForDiagram) — «блоки вне каталога» и т.п. Designer при сохранении
+  не валидирует; это делает только наш каталог.
+- Автосейв: `AutoSaveProcessed` пишет скрытый `~<имя>` рядом с файлом —
+  такие файлы в корпус/ревью не входят (см. corpus_mine/replay_corpus/
+  corpus_stats/build_verb_index, LNT-BAK-001).
+- Открытые вопросы (уровень 4 карты): семантика `PSCache` (в Designer поле
+  VM, кроме сериализации никем не читается — считаем opaque и не трогаем);
+  устройство `.sherpax`; условное 14-е поле `DesignerItem` (слот с динамическим
+  именем между Description и IsPSVerified; в реальных файлах не наблюдается).
+
+Отличие сборок: golden-файлы сняты с **1.4.4.40162**, IL-факты — с
+**1.4.4.40199**; лицензионное ядро и сериализационный тракт между этими
+сборками идентичны (сверено на 1.4.0.36597 / 1.4.4.40199 — карты Sherpa RPA).
 
 ## Файлы
 
@@ -44,7 +82,7 @@ Foreach*/ProcessContainer/Comment/FromJson/SplitString/LoadDataTable/OpenFileDia
 | `b10-datatable-ops.process` | 28 DataTable-блоков + table (DataTable) | **DataTable-контейнер** 1829 Б: внутри `xs:schema` + `tmpDataSet` + `diffgr` (модель §14 main.md подтверждена). Блоки с заполненными свойствами: GetCellValue v47, SetCellValue v61, AddColumn v57 (ColumnType Enum: String; NewType: 'Int'), AddRow v25, ChangeTypeColumn v25, SortDataTable v80, DistinctDataTable v16, MergeDataTable v61, SelectRows v36, ContainsValue v88, FindRow v58, ContainsColumn v10, RemoveEmptyRowColumn v19, GetDataTableRange v16, InsertDataTable v13, TransposeDataTable v14, LoadCSVDataTable v33, SaveCSVDataTable v26, DataTableToText v5, DataTableToHashtable v17, DataTableToList v7, ListToDataTable v7, ClearRows v10, RemoveRow v25, RemoveColumn v13, RenameColumn v9 |
 | `b11-datatables-x3.process` | Start, ReturnOrStop + table1/2/3 | **Три состояния DataTable**: пустая (930 Б), schema-only (1254 Б: string/double/dateTime), схема+строки (1829 Б: string/int/decimal/Guid). DiffGram: `Table11`/`rowOrder=0`/`hasChanges=inserted`; DBNull = отсутствие элемента ячейки (§14.6 подтверждён). Полная модель — references/datatable-serialization.md |
 | `b12-if-variable.process` | Start, IfCondition v46, ReturnOrStop ×2 | **Заполненный IF-условием на переменную**: `Condition='$Переменная1'` (VT='Any Expression'). Граф ветвления: Yes → Stop#1 через порт `Input`, No → Stop#2 через порт `InputLeft` — подтверждены оба входных порта Stop и коннекторы Yes/No |
-| `b14-while-todo-graph.process` | Start, While v32, ToDoBlock v10, ReturnOrStop | **Полный граф цикла** (§17.5 подтверждён): Start→While/Input; While.Iteration→ToDo/InputLeft; ToDo.Next→While/Input (возврат тела); While.Next→Stop/Input. Условие While снова пустое — P1 остаётся открытым. Размеры блоков: Start 70×70, While 100×100, ToDo 200×75 |
+| `b14-while-todo-graph.process` | Start, While v32, ToDoBlock v10, ReturnOrStop | **Полный граф цикла** (§17.5 подтверждён): Start→While/Input; While.Iteration→ToDo/InputLeft; ToDo.Next→While/Input (возврат тела); While.Next→Stop/Input. Условие While пустое в этом образце; P1 закрыт позже серией b18. Размеры блоков: Start 70×70, While 100×100, ToDo 200×75 |
 | `b15-for-loop.process` | Start, For v49, ToDoBlock v10, ReturnOrStop | **Второй вид цикла — For v49**: свойства StartIndex='0', EndIndex='5', Step='1' (Expression/Number), Index='$Index' (Variable/Number). Итерационный порт — `Index` (у While — `Iteration`!). Граф: For.Index→ToDo/InputLeft, ToDo.Next→For/Input, For.Next→Stop |
 | `b16-datatable-expanded.process` | 30 блоков (все DataTable-операции, 3× ReturnOrStop) | Расширенная версия b10: та же цепочка табличных операций + раскладка колонкой (Top с дробными значениями — авто-раскладка Designer при вставке подряд) |
 | `b17-invoke-expression.process` | Start, InvokeExpression v71, ReturnOrStop | **Выполнить выражение PowerShell**: InvokeExpression v71, `Expression1='10+$a'` (Type=Expression, VT=Expression) + переменная `a` (Number) |
@@ -82,7 +120,7 @@ Hashtable/Dictionary/DataTable хранят Base64-контейнеры с те�
 2. **Порты — `ConnectorSettings`**, а не `Connector` (контексты правил .sch по коннекторам указывают на несуществующие элементы).
 3. **`ReturnOrStop` v113** — Stop-блок; в main.md не был зафиксирован.
 4. **Log в двух версиях** (165 и 174) в рамках одного проекта — версии блоков плавают; подтверждает риск profile-per-Designer-version.
-5. **Пустое While-условие снова пустое** — P1 (заполненный While) остаётся открытым; заполненное выражение подтверждено пока только для IfCondition.
+5. **While-условие** — P1 закрыт серией b18 (`Condition='$Переменная1 -eq $True'`); пустое условие в b14 — исторический образец, а не текущее ограничение.
 
 ## Секреты
 

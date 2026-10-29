@@ -1,0 +1,201 @@
+{
+ "process": {
+  "name": "OCR_service_supervisor"
+ },
+ "variables": [
+  {
+   "name": "BusinessException",
+   "sherpa_type": "Logical",
+   "initial": false
+  },
+  {
+   "name": "ErrorMessage",
+   "sherpa_type": "Text",
+   "initial": ""
+  }
+ ],
+ "steps": [
+  {
+   "id": "start_log",
+   "quote": "записать старт сервиса в лог",
+   "type": "action",
+   "block": "Log",
+   "props": {
+    "Value": "\"Старт сервиса OCR\"",
+    "Level": "Info"
+   },
+   "display": "Старт сервиса"
+  },
+  {
+   "id": "guard",
+   "quote": "ошибка не должна убивать сервис",
+   "type": "try",
+   "body": [
+    {
+     "id": "init",
+     "quote": "инициализация сервиса",
+     "type": "action",
+     "block": "ProcessContainer",
+     "props": {
+      "DiagramName": "\"Init\""
+     },
+     "display": "Инициализация",
+     "on_error": [
+      {
+       "id": "init_err",
+       "quote": "сообщить об ошибке шага в лог",
+       "type": "action",
+       "block": "Log",
+       "props": {
+        "Value": "$ErrorMessage",
+        "Level": "Error"
+       },
+       "display": "Ошибка инициализации"
+      }
+     ]
+    },
+    {
+     "id": "get_job",
+     "quote": "получить задания из папки",
+     "type": "action",
+     "block": "ProcessContainer",
+     "props": {
+      "DiagramName": "\"getJob\""
+     },
+     "display": "Получить задания",
+     "on_error": [
+      {
+       "id": "get_job_err",
+       "quote": "сообщить об ошибке шага в лог",
+       "type": "action",
+       "block": "Log",
+       "props": {
+        "Value": "$ErrorMessage",
+        "Level": "Error"
+       },
+       "display": "Ошибка получения заданий"
+      }
+     ]
+    },
+    {
+     "id": "do_work",
+     "quote": "обработать задания",
+     "type": "action",
+     "block": "ProcessContainer",
+     "props": {
+      "DiagramName": "\"doWork\""
+     },
+     "display": "Обработать",
+     "on_error": [
+      {
+       "id": "do_work_err",
+       "quote": "сообщить об ошибке шага в лог",
+       "type": "action",
+       "block": "Log",
+       "props": {
+        "Value": "$ErrorMessage",
+        "Level": "Error"
+       },
+       "display": "Ошибка обработки"
+      }
+     ]
+    },
+    {
+     "id": "finish",
+     "quote": "завершить работу",
+     "type": "action",
+     "block": "ProcessContainer",
+     "props": {
+      "DiagramName": "\"end\""
+     },
+     "display": "Завершение",
+     "on_error": [
+      {
+       "id": "finish_err",
+       "quote": "сообщить об ошибке шага в лог",
+       "type": "action",
+       "block": "Log",
+       "props": {
+        "Value": "$ErrorMessage",
+        "Level": "Error"
+       },
+       "display": "Ошибка завершения"
+      }
+     ]
+    }
+   ],
+   "on_error": [
+    {
+     "id": "branch",
+     "quote": "бизнес- или системная ошибка",
+     "type": "condition",
+     "expr": {
+      "kind": "variable_reference",
+      "variable": "BusinessException"
+     },
+     "then": [
+      {
+       "id": "business_error",
+       "quote": "обработать бизнес-ошибку",
+       "type": "action",
+       "block": "ProcessContainer",
+       "props": {
+        "DiagramName": "\"business_error \""
+       },
+       "display": "Бизнес-ошибка",
+       "on_error": [
+        {
+         "id": "business_error_err",
+         "quote": "сообщить об ошибке обработчика в лог",
+         "type": "action",
+         "block": "Log",
+         "props": {
+          "Value": "$ErrorMessage",
+          "Level": "Error"
+         },
+         "display": "Ошибка обработчика бизнес-ошибки"
+        }
+       ]
+      }
+     ],
+     "else": [
+      {
+       "id": "system_error",
+       "quote": "обработать системную ошибку",
+       "type": "action",
+       "block": "ProcessContainer",
+       "props": {
+        "DiagramName": "\"system_error\""
+       },
+       "display": "Системная ошибка",
+       "on_error": [
+        {
+         "id": "system_error_err",
+         "quote": "сообщить об ошибке обработчика в лог",
+         "type": "action",
+         "block": "Log",
+         "props": {
+          "Value": "$ErrorMessage",
+          "Level": "Error"
+         },
+         "display": "Ошибка обработчика системных ошибок"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "final_log",
+   "quote": "отметить завершение в логе",
+   "type": "action",
+   "block": "Log",
+   "props": {
+    "Value": "\"Сервис завершил работу\"",
+    "Level": "Info"
+   },
+   "display": "Завершение работы"
+  }
+ ]
+}

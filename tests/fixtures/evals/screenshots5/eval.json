@@ -1,0 +1,12 @@
+{
+  "kind": "generate",
+  "title": "5 скриншотов с реальными блоками каталога",
+  "task": "task.md",
+  "plan": "plan.json",
+  "profile": "release",
+  "reference": {"path": "reference.process"},
+  "checks": [
+    {"metric": "score", "min": 1.0}
+  ],
+  "note": "Эталон — замороженный артефакт release-сборки этого же плана (зафиксирован при введении eval-пар). Пара ловит регрессии компилятора и plan_to_ir: любое изменение типов блоков или портов в собранном файле роняет score и тест. Перегенерировать эталон можно только осознанно: plan_to_ir.py plan.json out.ir.json && cli.py build out.ir.json reference.process --mode release."
+}

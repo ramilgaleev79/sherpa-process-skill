@@ -1,0 +1,26 @@
+{
+  "process": {"name": "ScreenshotsMailSave"},
+  "variables": [
+    {"name": "Индекс", "sherpa_type": "Number", "initial": 0}
+  ],
+  "steps": [
+    {"id": "prep", "quote": "подготовить папку для скриншотов", "type": "action",
+     "todo": "Подготовить папку"},
+    {"id": "loop", "quote": "5 скриншотов", "type": "repeat", "kind": "for",
+     "start": 1, "end": 5, "index": "Индекс",
+     "body": [
+       {"id": "shot", "quote": "сделать скриншот", "type": "action", "todo": "Сделать скриншот"},
+       {"id": "after2", "quote": "если индекс больше 2", "type": "condition",
+        "expr": {"kind": "compare", "operator": "gt",
+                 "left": {"kind": "variable_reference", "variable": "Индекс"},
+                 "right": {"kind": "number_literal", "value": 2}},
+        "then": [
+          {"id": "mail", "quote": "отправить письмо", "type": "action", "todo": "Отправляем письмо"},
+          {"id": "done", "quote": "конец", "type": "terminal"}
+        ],
+        "else": []}
+     ]},
+    {"id": "save", "quote": "сохранить скриншот на диск", "type": "action",
+     "todo": "Сохраняем скриншот"}
+  ]
+}

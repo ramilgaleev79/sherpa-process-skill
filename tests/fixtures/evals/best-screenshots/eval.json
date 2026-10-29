@@ -1,0 +1,13 @@
+{
+  "kind": "generate",
+  "title": "5 скриншотов: подготовка → цикл → письмо или сохранение",
+  "task": "task.md",
+  "plan": "plan.json",
+  "profile": "draft",
+  "reference": {"path": "../../../../golden/real/best-screenshots-mail-save.process"},
+  "checks": [
+    {"metric": "type_score", "min": 1.0},
+    {"metric": "score", "min": 0.8}
+  ],
+  "note": "Эталон — реальная диаграмма Designer 1.4.4, собранная до появления каталога блоков (4 ToDoBlock). Набор типов должен совпасть точно; по связям допуск 0.8: план строит No → InputLeft, а в эталоне No → Input, и добавляет терминатор после цикла. Источник эталона и что он подтверждает — golden/manifest.yaml."
+}

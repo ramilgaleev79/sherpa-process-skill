@@ -174,6 +174,11 @@ def build_diffgram(rows: list[dict[str, str]] | None) -> str:
             'diffgr:hasChanges="inserted">\r\n'
         )
         for col, value in row.items():
+            if not isinstance(col, str) or not isinstance(value, str):
+                raise ValueError(
+                    "DataTable: значения ячеек должны быть строками; "
+                    "DBNull кодируется отсутствием ключа"
+                )
             out.append(f"      <{_xml_escape(col)}>{_xml_escape(value)}</{_xml_escape(col)}>\r\n")
         out.append("    </Table1>\r\n")
     out.append("  </tmpDataSet>\r\n</diffgr:diffgram>")

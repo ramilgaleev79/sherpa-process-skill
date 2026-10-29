@@ -1,8 +1,9 @@
 """Компилятор IR → .process (фаза 4).
 
-Архитектура confirmed-over-invented: XML блоков не конструируется, а берётся
-КАНОНИЧЕСКИЙ ШАБЛОН из golden (assets/block_templates.json, extract_templates.py);
-компилятор только подставляет Property/@Value, GUID, layout и собирает граф.
+Библиотека-over-invented: XML блоков не конструируется, а берётся канонический
+шаблон блока из библиотеки установленного Designer (assets/block_templates.json,
+scripts/dev/harvest_catalog.py); компилятор только подставляет Property/@Value,
+идентификаторы, раскладку и собирает граф.
 
 Формат выходного файла сверен с golden: UTF-8 BOM, CRLF, отступы 2/4/6,
 порядок секций Root: DesignerItems, Connections, Properties, PSCache,
@@ -17,7 +18,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 from . import identifiers, layout
-from .ir import ProcessIR
+from .ir import ProcessIR, resolve_physical
 from .types import collections, data_table, primitives, text
 
 ZERO_GUID = "00000000-0000-0000-0000-000000000000"
@@ -32,8 +33,41 @@ class CompileError(ValueError):
     """Нарушение инварианта при генерации (порт, типизация, неподтверждённая ветка)."""
 
 
+# Свойства, управляемые типизированными полями IR (AST), а не raw properties.
+# Raw-перекрытие любого из них — ошибка SHP-PROP-001 (валидатор).
+_TYPED_EXACT: dict[str, frozenset[str]] = {
+    # Ключи — физические InternalName: алиасы и физические имена должны вести
+    # себя одинаково (SKILL: тип узла — любой InternalName каталога).
+    "IfCondition": frozenset({"Condition"}),
+    "While": frozenset({"Condition"}),
+    "For": frozenset({"StartIndex", "EndIndex", "Step", "Index"}),
+    "InvokeExpression": frozenset({"Expression1"}),
+}
+_TYPED_ASSIGN_PROPS = re.compile(r"^(?:Variable|Expression)(?:[1-9]|10)$")
+
+
+def overrides_typed_field(node_type: str, prop: str) -> bool:
+    """True, если raw-свойство перекрывает поле, управляемое типизированным IR."""
+    physical = resolve_physical(node_type) or node_type
+    if physical == "Assign":
+        return bool(_TYPED_ASSIGN_PROPS.match(prop))
+    return prop in _TYPED_EXACT.get(physical, frozenset())
+
+
 def xml_attr_escape(value: str) -> str:
-    return value.replace("&", "&amp;").replace("<", "&lt;").replace('"', "&quot;")
+    """Экранирование значения атрибута для inner-XML Content.
+
+    Переводы строк обязаны стать сущностями `&#xA;` (иначе XML-нормализация
+    атрибутов заменит их пробелами — проверено на DisplayName из InitAllSettings.process,
+    где Designer пишет многострочный комментарий).
+    """
+    return (
+        value.replace("&", "&amp;")
+        .replace("<", "&lt;")
+        .replace('"', "&quot;")
+        .replace("\r", "&#xD;")
+        .replace("\n", "&#xA;")
+    )
 
 
 def ps_expression(expr: dict, top: bool = True) -> str:
@@ -103,6 +137,10 @@ def initial_value(sherpa_type: str, initial: dict | None) -> str:
             return collections.encode_hashtable([])
         if sherpa_type == "DataTable":
             return data_table.encode(data_table.build_schema(None), data_table.build_diffgram(None))
+        if sherpa_type in ("Object", "DateTime", "Money"):
+            # каталог продукта объявляет эти типы, но контейнер начального значения не
+            # подтверждён golden-образцом: объявляем пустым значением (как Designer для Object)
+            return ""
         if sherpa_type == "Dictionary":
             raise CompileError("пустой Dictionary-контейнер не подтверждён golden — объявляйте без начального значения нельзя; запросите образец")
         raise CompileError(f"тип {sherpa_type} без initial не поддержан")
@@ -141,38 +179,62 @@ def initial_value(sherpa_type: str, initial: dict | None) -> str:
         )
     if sherpa_type == "Dictionary":
         raise CompileError("начальное значение Dictionary не поддержано (encode не подтверждён golden)")
+    if sherpa_type == "DateTime":
+        if kind == "datetime_literal":
+            return initial["value"]
+        if kind == "string_literal" and initial["value"] == "":
+            return ""
+        raise CompileError("DateTime.initial должен быть datetime_literal (dd.MM.yyyy HH:mm:ss)")
+    if sherpa_type in ("Object", "Money"):
+        if kind == "string_literal" and initial["value"] == "":
+            return ""
+        raise CompileError(
+            f"непустое начальное значение {sherpa_type} не подтверждено golden-образцом — "
+            f"объявите переменную пустой и присвойте значение через Assign"
+        )
     raise CompileError(f"тип {sherpa_type} не поддержан")
 
 
 def node_property_values(node: dict) -> dict[str, str]:
     """Значения Property/@Value, задаваемые IR для узла (ключ — имя свойства)."""
     ntype = node["type"]
+    physical = resolve_physical(ntype) or ntype
     values: dict[str, str] = {}
-    if ntype == "Assign":
+    if physical == "Assign":
         if len(node.get("assignments", [])) > 10:
             raise CompileError("Assign: максимум 10 пар (§15.2)")
         for i, pair in enumerate(node.get("assignments", []), start=1):
             values[f"Variable{i}"] = "$" + pair["target"]
             values[f"Expression{i}"] = ps_expression(pair["expression"])
-    elif ntype == "Condition":
+    elif physical == "IfCondition":
         values["Condition"] = ps_expression(node["condition"])
-    elif ntype == "WhileLoop":
+    elif physical == "While":
         values["Condition"] = ps_expression(node["condition"])
-    elif ntype == "ForLoop":
+    elif physical == "For":
+        if node.get("end_index") is None:
+            raise CompileError(f"{node['key']}: For требует end_index")
+        step = node.get("step")
+        if step is not None and step.get("kind") == "number_literal" and step.get("value") == 0:
+            raise CompileError(f"{node['key']}: For не допускает step=0 (бесконечный цикл)")
         values["StartIndex"] = ps_expression(node["start_index"]) if node.get("start_index") is not None else "0"
-        values["EndIndex"] = ps_expression(node["end_index"]) if node.get("end_index") is not None else "0"
-        values["Step"] = ps_expression(node["step"]) if node.get("step") is not None else "1"
+        values["EndIndex"] = ps_expression(node["end_index"])
+        values["Step"] = ps_expression(step) if step is not None else "1"
         if node.get("index_variable"):
             values["Index"] = "$" + node["index_variable"]
-    elif ntype == "InvokeExpression":
-        if node.get("properties", {}).get("Expression1"):
-            values["Expression1"] = node["properties"]["Expression1"]
-        elif node.get("expression"):
-            values["Expression1"] = ps_expression(node["expression"])
-    # прочие блоки (коллекции/таблицы/Delay/контейнеры): raw PS-строки из properties
+    elif physical == "InvokeExpression":
+        # только типизированный путь (AST); raw-перекрытие Expression1 запрещено SHP-PROP-001
+        if node.get("expression") is None:
+            raise CompileError(f"{node['key']}: InvokeExpression требует 'expression'")
+        values["Expression1"] = ps_expression(node["expression"])
+    # прочие блоки (коллекции/таблицы/Delay/контейнеры): raw PS-строки из properties;
+    # перекрытие типизированных полей отсекается валидатором (SHP-PROP-001)
     for name, raw in node.get("properties", {}).items():
         if not isinstance(raw, str):
             raise CompileError(f"{node['key']}.{name}: значение свойства должно быть PS-строкой")
+        if overrides_typed_field(ntype, name):
+            raise CompileError(
+                f"{node['key']}.{name}: raw-свойство перекрывает типизированное поле — задайте через контракт IR"
+            )
         values[name] = raw
     return values
 
@@ -264,19 +326,26 @@ class Compiler:
     # --- детали ---
 
     def _physical(self, node: dict) -> str:
-        from .ir import NODE_TYPES
+        from .ir import resolve_physical
 
-        physical = NODE_TYPES[node["type"]]
+        physical = resolve_physical(node["type"])
+        if physical is None:
+            raise CompileError(
+                f"тип узла {node['type']!r} отсутствует в каталоге блоков "
+                f"(assets/block_index.json); неизвестное действие оформляйте ToDo"
+            )
         if physical not in self.templates:
-            raise CompileError(f"нет golden-шаблона для блока {physical} (тип {node['type']})")
+            raise CompileError(f"нет шаблона для блока {physical} (тип {node['type']})")
         return physical
 
     def _check_graph_shape(self, nodes: list, edges: list) -> None:
-        types = [n["type"] for n in nodes]
-        if types.count("Start") != 1:
+        # Проверяем физические имена: Start/ReturnOrStop — реальные InternalName,
+        # алиасы Stop и т.п. не должны обходить проверку.
+        physical_types = [resolve_physical(n["type"]) or n["type"] for n in nodes]
+        if physical_types.count("Start") != 1:
             raise CompileError("в графе должен быть ровно один Start (GRF-001)")
-        if types.count("Stop") < 1:
-            raise CompileError("нужен хотя бы один Stop (GRF-002)")
+        if physical_types.count("ReturnOrStop") < 1:
+            raise CompileError("нужен хотя бы один Stop/ReturnOrStop (GRF-002)")
         # порты: from_port должен быть выходом шаблона, to_port — входом
         node_by_key = {n["key"]: n for n in nodes}
         for e in edges:
@@ -314,7 +383,7 @@ class Compiler:
         values = node_property_values(node)
         # DisplayName: явный display_name; у ToDo — имя отсутствующего действия (golden best_*)
         display = node.get("display_name")
-        if not display and node["type"] == "ToDo":
+        if not display and resolve_physical(node["type"]) == "ToDoBlock":
             display = node.get("unresolved_action")
         content = fill_template(tpl["content"], values, tpl["property_defaults"], display_name=display)
         ET.fromstring(content)  # well-formed проверка шаблона после подстановки

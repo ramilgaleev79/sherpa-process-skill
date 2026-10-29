@@ -16,7 +16,9 @@ from cli import TEMPLATE  # sys.path настраивается в tests/conftes
 def test_template_is_valid_ir():
     parsed = ir.ProcessIR.parse(TEMPLATE)
     assert parsed["process"]["mode"] == "draft"
-    assert [n["type"] for n in parsed["nodes"]] == ["Start", "Assign", "Condition", "Stop"]
+    assert [n["type"] for n in parsed["nodes"]] == ["Start", "Assign", "Stop"]
+    # скелет без алгоритма: синтаксис конструкций живёт в metadata, а не в графе
+    assert parsed["metadata"]["constructs"] and parsed["metadata"]["hint"]
 
 
 def test_roundtrip_byte_stable(tmp_path):
@@ -33,8 +35,8 @@ def test_unknown_key_rejected():
 
 
 def test_unknown_node_type_rejected():
-    bad = {"nodes": [{"key": "n1", "type": "OutlookSendMail"}], "edges": []}
-    with pytest.raises(ir.IRError, match="не подтверждён"):
+    bad = {"nodes": [{"key": "n1", "type": "NoSuchBlockXyz"}], "edges": []}
+    with pytest.raises(ir.IRError, match="каталог"):
         ir.ProcessIR.parse(bad)
 
 
@@ -89,3 +91,26 @@ def test_string_literal_is_plain_data():
     assert ok["value"] == 'Он сказал "Тест"'
     with pytest.raises(ir.IRError):
         ir.Expr({"kind": "string_literal", "value": 42})
+
+
+def test_invoke_expression_requires_expression():
+    bad = {"nodes": [{"key": "ie", "type": "InvokeExpression",
+                      "properties": {"Expression1": "Get-Date"}}], "edges": []}
+    with pytest.raises(ir.IRError, match="expression"):
+        ir.ProcessIR.parse(bad)
+    ok = {"nodes": [{"key": "ie", "type": "InvokeExpression",
+                     "expression": {"kind": "powershell", "value": "Get-Date"}}], "edges": []}
+    parsed = ir.ProcessIR.parse(ok)
+    assert parsed["nodes"][0]["expression"]["value"] == "Get-Date"
+
+
+def test_unresolved_actions_accepted_but_dropped():
+    # старые IR с этим ключом парсятся; реестр ToDo теперь генерируется при сборке
+    data = {
+        "nodes": [{"key": "s", "type": "Start"}, {"key": "e", "type": "Stop"}],
+        "edges": [{"from": "s", "to": "e"}],
+        "unresolved_actions": [{"action": "старое поле"}],
+    }
+    parsed = ir.ProcessIR.parse(data)
+    assert "unresolved_actions" not in parsed
+    assert "unresolved_actions" not in parsed.dumps()

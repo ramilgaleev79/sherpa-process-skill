@@ -14,13 +14,18 @@
 Использование:
     python change_impact.py FILE.process --spec spec.json [--json]
 
-Спецификация (все поля необязательны):
+Спецификация — общий контракт с `apply_spec.py` (запись) и `process_diff.py --expect`
+(доказательство): `scripts/edit_spec.py`. Кратко (все поля необязательны):
+
 {
-  "add_blocks":    [{"id": "<guid>", "internal": "SendMailMessage", "display": "…", "props": {}}],
+  "add_blocks":    [{"id": "<guid>", "internal": "SendMailMessage", "display": "…",
+                     "props": {}, "clone_of": "<guid>", "place": {"anchor": "<guid>"}}],
   "remove_blocks": ["<guid>", …],
   "add_edges":     [["<src>", "Next", "<dst>", "Input"]],
   "remove_edges":  [["<src>", "Next", "<dst>", "Input"]],       // null = любой
-  "set_props":     [{"block": "<guid>", "name": "FileName", "value": "…"}]  // value=null — удалить
+  "set_props":     [{"block": "<guid>", "name": "FileName", "value": "…"}],  // value=null — снять
+  "rename_variables": [{"from": "$old", "to": "new"}]   // «как Designer»: вне кавычек
+                                                         // и вне #stoprefactoring-зон
 }
 
 Код возврата: 0 — правка локальна, 1 — есть побочные эффекты (см. отчёт).
@@ -31,18 +36,29 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from collections import defaultdict
 from pathlib import Path
 
+from edit_spec import SPEC_KEYS, SpecError, normalize, validate_spec
+from process_diff import load as load_model
+from sherpa_xml.console import utf8_stdio
+from sherpa_xml.designer_refactor import plan_rename, rename_in_text
 from structure_audit import hot_vars, load, model
 
 MAX_LIST = 12
 
 
-def apply_spec(blocks: dict, edges: list, spec: dict) -> tuple[dict, list, dict]:
+def apply_to_model(blocks: dict, edges: list, spec: dict) -> tuple[dict, list, dict]:
     b = {k: {**v, "props": dict(v["props"])} for k, v in blocks.items()}
     e = list(edges)
     touched_blocks: set[str] = set()
+
+    # rename_variables применяется к значениям свойств ДО структурных шагов:
+    # data-слой после правки видит новых писателей/читателей честно
+    for op in normalize(spec)["rename_variables"]:
+        mapping = {op["from"]: op["to"]}
+        for blk in b.values():
+            for pname, pval in list(blk["props"].items()):
+                blk["props"][pname] = rename_in_text(str(pval), mapping)
 
     for x in spec.get("remove_edges", []):
         src, port, dst, sink = (list(x) + [None, None, None, None])[:4]
@@ -90,8 +106,21 @@ def short_list(ids, fmt=lambda x: x[:8]) -> str:
 
 def impact(path: Path, spec: dict) -> dict:
     blocks, edges = load(path)
+    validate_spec(spec, blocks)
+    # rename_variables: from обязан существовать, to — не занят (как в apply_spec)
+    renames = normalize(spec)["rename_variables"]
+    mapping = {op["from"]: op["to"] for op in renames}
+    if mapping:
+        declared = set(load_model(path).get("variables") or {})
+        for op in renames:
+            if op["from"] not in declared:
+                raise SpecError(f"rename_variables: переменная {op['from']!r} "
+                                f"не объявлена в этом файле")
+            if op["to"] in declared:
+                raise SpecError(f"rename_variables: имя {op['to']!r} уже занято")
+    rename_info = _rename_radius(blocks, mapping) if mapping else None
     before = model(blocks, edges)
-    nb, ne, touched = apply_spec(blocks, edges, spec)
+    nb, ne, touched = apply_to_model(blocks, edges, spec)
     after = model(nb, ne)
 
     gone = before["reach"] - after["reach"]
@@ -161,6 +190,7 @@ def impact(path: Path, spec: dict) -> dict:
 
     return {
         "file": path.name,
+        "rename": rename_info,
         "gone": sorted(gone), "new_reachable": sorted(new),
         "owner_changed": owner_changed,
         "kind_changed": kind_changed,
@@ -176,6 +206,40 @@ def impact(path: Path, spec: dict) -> dict:
         "edges": {"before": len(edges), "after": len(ne)},
         "meta": {"blocks": blocks, "nb": nb},
     }
+
+
+def _rename_radius(blocks: dict, mapping: dict[str, str]) -> dict:
+    """Радиус переименования по семантике Designer (raw-пространство props).
+
+    Что заменится, а что Designer закономерно НЕ тронет (кавычки, зоны
+    `#stoprefactoring`, `$x:`-квалификаторы) — последнее не побочный эффект,
+    а поведение инструмента; но читатели старого имени в этих местах после
+    правки останутся со ссылкой на несуществующую переменную.
+    """
+    stats = {"replace": 0, "in_quotes": 0, "directive_zone": 0, "scope_qualified": 0}
+    hit_blocks: dict[str, list[str]] = {}
+    protected: list[dict] = []
+    for bid, blk in blocks.items():
+        for pname, pval in (blk.get("props") or {}).items():
+            findings = plan_rename(str(pval), mapping)
+            if not findings:
+                continue
+            replaced = False
+            for f in findings:
+                stats[f["kind"]] += 1
+                if f["kind"] == "replace":
+                    replaced = True
+                else:
+                    protected.append({"block": bid, "prop": pname,
+                                      "kind": f["kind"], "line": f["line"],
+                                      "name": f["name"]})
+            if replaced:
+                hit_blocks.setdefault(bid, []).append(pname)
+    return {"ops": [{"from": k, "to": v} for k, v in mapping.items()],
+            "blocks": {k: v for k, v in hit_blocks.items()},
+            "replace": stats["replace"], "protected": protected,
+            "in_quotes": stats["in_quotes"], "directive_zone": stats["directive_zone"],
+            "scope_qualified": stats["scope_qualified"]}
 
 
 def report(res: dict) -> None:
@@ -213,6 +277,23 @@ def report(res: dict) -> None:
     if res["orphan"]:
         print(f"   новые блоки без входа ({len(res['orphan'])}): {short_list(res['orphan'], label)}")
 
+    if res.get("rename"):
+        rn = res["rename"]
+        pairs = ", ".join("%s→%s" % (o["from"], o["to"]) for o in rn["ops"])
+        print("\n2. РАДИУС ПЕРЕИМЕНОВАНИЯ (семантика Designer, IL-verified)")
+        print("   %s: замен %d в %d блок(ах)" % (pairs, rn["replace"], len(rn["blocks"])))
+        if rn["in_quotes"] or rn["directive_zone"] or rn["scope_qualified"]:
+            print("   Designer НЕ тронет (норма инструмента): в кавычках %d, "
+                  "в зонах #stoprefactoring %d, квалификаторов $x: %d"
+                  % (rn["in_quotes"], rn["directive_zone"], rn["scope_qualified"]))
+            why = {"in_quotes": "в кавычках", "directive_zone": "зона директивы",
+                   "scope_qualified": "квалификатор $x:"}
+            for pr in rn["protected"][:MAX_LIST]:
+                print("      %s %s (%s, стр. %d) — ссылка на $%s ОСТАНЕТСЯ"
+                      % (label(pr["block"]), pr["prop"], why[pr["kind"]], pr["line"], pr["name"]))
+            if len(rn["protected"]) > MAX_LIST:
+                print("      … ещё %d" % (len(rn["protected"]) - MAX_LIST))
+
     print("\n2. РАДИУС ДАННЫХ (флаги и переменные, которых правка касается)")
     if not res["data"]:
         print("   переменные не затронуты")
@@ -244,6 +325,7 @@ def _jsonable(o):
 
 
 def main() -> int:
+    utf8_stdio()
     ap = argparse.ArgumentParser(description="Радиус планируемой правки .process (без записи в файл)")
     ap.add_argument("file")
     ap.add_argument("--spec", required=True, help="JSON со спецификацией правки")
@@ -253,8 +335,12 @@ def main() -> int:
     if not path.exists():
         print(f"нет файла: {path}", file=sys.stderr)
         return 2
-    spec = json.loads(Path(args.spec).read_text(encoding="utf-8-sig"))
-    res = impact(path, spec)
+    try:
+        spec = json.loads(Path(args.spec).read_text(encoding="utf-8-sig"))
+        res = impact(path, spec)
+    except (SpecError, json.JSONDecodeError, OSError) as exc:
+        print(f"FAIL: {exc}", file=sys.stderr)
+        return 2
     if args.json:
         payload = {k: v for k, v in res.items() if k != "meta"}
         print(json.dumps(payload, ensure_ascii=False, indent=1, default=_jsonable))
