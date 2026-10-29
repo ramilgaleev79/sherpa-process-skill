@@ -1,4 +1,4 @@
-"""Профили валидации (main.md §4/§23; runtime-источник истины — pure stdlib).
+"""Профили валидации (runtime-источник истины — pure stdlib).
 
 Справочник для человека: references/validation-profiles.yaml (синхронность
 проверяется тестом в dev-venv).

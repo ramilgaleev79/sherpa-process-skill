@@ -3,8 +3,8 @@
 
 Установленная копия — только рантайм: CLI, инспектор, пакет sherpa_xml,
 шаблоны блоков, справочники, инструменты обслуживания каталога и манифест golden.
-Репозиторий разработки (golden .process, scripts/dev/, schemas/, main.md,
-PLAN.md, README.md, tests/) в копию не попадает — он нужен только при работе в репо.
+Репозиторий разработки (golden .process, scripts/dev/, schemas/,
+README.md, tests/) в копию не попадает — он нужен только при работе в репо.
 
 Запуск (cwd любой, путь репозитория вычисляется от __file__):
     python scripts/install_skill.py [--target PATH] [--dry-run] [--force]

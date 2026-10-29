@@ -78,7 +78,7 @@ python scripts/dev/replay_corpus.py --report replay.json
 | `InternalBrowserGet` | `InternalBrowserAsyncGet` / `InternalBrowserRequest` |
 | `NewFile` | `OrchStorageCreateFile` (иное: Storage Оркестратора) |
 
-## Открытые вопросы (закрыты данными, 2026-10)
+## Открытые вопросы (закрыты данными)
 
 1. **Имя элемента свойства** → `<Property Name="…">` (0 именованных на 24 194).
 2. **Base64 для Text** → все непустые значения `DiagramProperty Type=Text` лежат в

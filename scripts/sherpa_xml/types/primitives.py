@@ -1,4 +1,4 @@
-"""Скалярные типы в декларации DiagramProperty (golden: b05, diag03, main.md §10).
+"""Скалярные типы в декларации DiagramProperty (golden: b05, diag03).
 
 Формы различаются по контексту: декларация vs выражение (§10.2 Logical).
 """

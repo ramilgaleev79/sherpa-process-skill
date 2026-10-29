@@ -63,7 +63,7 @@ def _read_7bit(data: bytes, offset: int) -> tuple[int, int]:
 def decode_binary_container(b64_value: str, hex_limit: int) -> None:
     """Пытаемся декодировать Base64 и показать побайтовую структуру контейнера.
 
-    Формат из main.md §11.1: PREFIX + encode_7bit(len(UTF8(ps_literal))) + UTF8 + 0x0B.
+    Формат: PREFIX + encode_7bit(len(UTF8(ps_literal))) + UTF8 + 0x0B.
     Длину ищем с конца: перебираем k = длине литерала и позицию 7-bit префикса
     (1–5 байт; старый вариант поддерживал только k < 128).
     """

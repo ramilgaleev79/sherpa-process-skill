@@ -1,5 +1,5 @@
-# Профили валидации (main.md §4, §23; PLAN.md D3).
-# Используется validator.py (фаза 5) и cli.py build; согласуется с schemas/sherpa-rules.sch (dev-слой).
+# Профили валидации.
+# Используется validator.py и cli.py build; согласуется с schemas/sherpa-rules.sch (dev-слой).
 
 designer_version: "1.4.4"
 

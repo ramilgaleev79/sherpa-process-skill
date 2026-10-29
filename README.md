@@ -108,7 +108,7 @@ IR (JSON, агент) ──validate_ir──► отчёт (код/серьёз
   EnumVariants, Bool — True/False, Expression/Variable — простой операнд (SEM-PROP-002);
   InvokeExpression в strict запрещён.
 - **Синтез графа** (`references/graph-synthesis.md`) — как строить процесс из задачи;
-  готовых процессов-заготовок нет: каталог `patterns/` удалён 2026-10-20.
+  готовых процессов-заготовок нет: алгоритм выводится только из текста задачи.
 - **Правила генерации с машинной проверкой** (`SHP-GEN-*`, всегда WARN): свойство,
   равное дефолту шаблона; длинный `unresolved_action` (ToDo = действие); выдуманная
   инфраструктура в значении; секрет в значении. Правило без проверки перестаёт
@@ -117,20 +117,19 @@ IR (JSON, агент) ──validate_ir──► отчёт (код/серьёз
   процессам, `scripts/dev/build_verb_index.py`) и `scripts/block_suggest.py` —
   кандидаты блоков на шаге 3 синтеза графа.
 - **Eval-пары** (`tests/fixtures/evals/`): задача → план → IR → build →
-  `graph_compare` против эталона (артефакт Designer, замороженная сборка, верхний
-  уровень реального проекта OCR). Правка правил или компилятора проверяется числом:
+  `graph_compare` против эталона (диаграмма из Designer, фиксированная release-сборка,
+  верхний уровень многослойного сервиса). Правка правил или компилятора проверяется числом:
   `tests/unit/test_evals.py`.
 - **Инспектор** (`scripts/golden_inspector.py`, только stdlib) — рантайм-инструмент:
   разбор чужого `.process` (структура, Base64-контейнеры, побайтовый разбор `--deep`).
 - **Обслуживание библиотеки** (репозиторий скила, venv): `scripts/dev/harvest_catalog.py`
   (снять 752 блока с установленного Designer), `scripts/dev/replay_corpus.py` (прогон по корпусу).
-  Генераторов паттернов и старых конвертеров (`gen_catalog`, `extract_templates`, `ingest_block`) нет.
+ 
 
 ## Структура
 
 ```text
 SKILL.md            инструкции агента          references/  каталоги + форматы
-PLAN.md             план и статус фаз
 scripts/            cli.py + sherpa_xml/ (рантайм, stdlib) + файловые инструменты:
                     lint_process.py, structure_audit.py, golden_inspector.py,
                     change_impact.py, apply_spec.py, edit_spec.py, process_diff.py,

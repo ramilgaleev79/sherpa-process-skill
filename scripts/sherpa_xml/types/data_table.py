@@ -1,4 +1,4 @@
-"""DataTable-контейнер: XmlSchema + XmlDiffGram (main.md §14, golden b11).
+"""DataTable-контейнер: XmlSchema + XmlDiffGram (golden b11).
 
 Формула подтверждена побайтово на трёх состояниях (пустая/schema-only/с данными):
 

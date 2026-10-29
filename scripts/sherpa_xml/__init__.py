@@ -2,5 +2,5 @@
 
 Слои: ir (контракт) → identifiers/layout → types (сериализаторы значений)
 → compiler/serializer (фаза 4) → validator (фаза 5).
-Pure stdlib (PLAN.md D1).
+Pure stdlib.
 """

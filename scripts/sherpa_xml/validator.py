@@ -1,4 +1,4 @@
-"""Валидатор (фаза 5): Python-слой — «всё умное» (PLAN.md D3).
+"""Валидатор: Python-слой — «всё умное».
 
 Два входа:
 - validate_ir(ir, profile, templates=None) — проверка IR до генерации (SEM-*, SHP-граф);
@@ -24,7 +24,7 @@ from .compiler import overrides_typed_field
 from .ir import BLOCK_NAMES, NODE_TYPES, VARIABLE_TYPES, ProcessIR, resolve_physical
 from .types import collections, data_table, primitives, text
 
-# Hashtable*-блоки: main.md §12.2 confirmed, но golden-образца нет (tests GOLDEN_MISSING).
+# Hashtable*-блоки: подтверждены каталогом, но golden-образца нет (tests GOLDEN_MISSING).
 # При переданных templates неиспользуемость вычисляется по ним, это — fallback.
 UNCONFIRMED_PHYSICAL = frozenset(
     {NODE_TYPES[k] for k in ("CollectionClear", "CollectionSetItem", "CollectionRemoveItem",
@@ -374,7 +374,7 @@ def validate_ir(parsed: ProcessIR, profile: str = "draft", templates: dict | Non
         if templates is not None:
             missing_template = physical is None or physical not in templates
         else:
-            # без шаблонов достоверно знаем только исторический список
+            # без шаблонов достоверно знаем только список
             # неподтверждённых Hashtable-блоков; остальное проверит build.
             missing_template = physical in UNCONFIRMED_PHYSICAL
         if missing_template:

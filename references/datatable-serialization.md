@@ -43,7 +43,7 @@ DiagramProperty @DefaultValue = Base64( контейнер )
 </xs:schema>
 ```
 
-Подтверждённые типы колонок: `xs:string`, `xs:double`, `xs:dateTime`, `xs:int`, `xs:decimal`; Guid — `xs:string` + атрибут `msdata:DataType="System.Guid, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"` (соответствие §14.5 main.md).
+Подтверждённые типы колонок: `xs:string`, `xs:double`, `xs:dateTime`, `xs:int`, `xs:decimal`; Guid — `xs:string` + атрибут `msdata:DataType="System.Guid, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089"`.
 
 ## XmlDiffGram
 

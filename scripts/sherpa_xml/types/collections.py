@@ -1,4 +1,4 @@
-"""Контейнеры коллекций: List<String>, Hashtable (main.md §12–13, golden b07/b09).
+"""Контейнеры коллекций: List<String>, Hashtable (golden b07/b09).
 
 Формат — BinaryFormatter-подобная сериализация Sherpa; формулы выведены
 побайтово из golden и подтверждены round-trip (byte-equal).
@@ -114,7 +114,7 @@ def encode_hashtable(pairs: list[tuple[str, str]]) -> str:
     """Пары (ключ, значение) в переданном порядке → Base64-контейнер.
 
     Порядок пар сохраняется как есть; runtime-порядок итерации не гарантируется
-    (main.md §12.4). Поля Version=5/HashSize=10 — константы образца n=4.
+    Поля Version=5/HashSize=10 — константы образца n=4.
     """
     n = len(pairs)
     out = bytearray(HEADER)

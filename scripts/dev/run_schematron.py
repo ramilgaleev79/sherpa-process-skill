@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Прогон schemas/sherpa-rules.sch через SaxonC (dev-venv, PLAN.md D9).
+"""Прогон schemas/sherpa-rules.sch через SaxonC (dev-venv).
 
 Pipeline ISO Schematron (XSLT2 skeleton):
     .sch → iso_dsdl_include.xsl → iso_abstract_expand.xsl → iso_svrl_for_xslt2.xsl

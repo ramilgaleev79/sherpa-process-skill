@@ -1,4 +1,4 @@
-"""Text: PS-литерал + бинарный контейнер + Base64 (main.md §11, golden b05).
+"""Text: PS-литерал + бинарный контейнер + Base64 (golden b05).
 
 Формат подтверждён побайтово (references/text-serialization.md):
 
