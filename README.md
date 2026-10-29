@@ -23,6 +23,8 @@ python scripts/cli.py build example.ir.json example.process --mode release
 ## Установка скила (runtime-копия)
 
 ```bash
+git clone https://github.com/ramilgaleev79/sherpa-process-skill
+cd sherpa-process-skill
 python scripts/install_skill.py             # -> ~/.agents/skills/sherpa-process
 python scripts/install_skill.py --force     # перезаписать цель без маркера sherpa-process
 ```
@@ -123,8 +125,8 @@ IR (JSON, агент) ──validate_ir──► отчёт (код/серьёз
 ## Структура
 
 ```text
-SKILL.md            инструкции агента          main.md   исторический дизайн-док
-PLAN.md             план и статус фаз          references/  каталоги + форматы
+SKILL.md            инструкции агента          references/  каталоги + форматы
+PLAN.md             план и статус фаз
 scripts/            cli.py + sherpa_xml/ (рантайм, stdlib) + файловые инструменты:
                     lint_process.py, structure_audit.py, golden_inspector.py,
                     change_impact.py, apply_spec.py, edit_spec.py, process_diff.py,
@@ -150,3 +152,11 @@ tests/              pytest; fixtures/evals/ — пары «задача → пл
 - Hashtable*-блоки операций собираются из каталожных шаблонов; их значения проверяются
   по шаблону, но отдельного golden-образца операций нет.
 - Привязка к Designer 1.4.4; для других версий — новая golden-серия.
+
+## Лицензия
+
+Код и документация — [MIT](LICENSE), © 2026 GaleevRR.
+Исключение — данные каталога блоков (`assets/block_templates.json`,
+`assets/block_index.json`, `references/block-catalog.yaml`): сняты с
+установленного Sherpa RPA Designer 1.4.4 и принадлежат его правообладателю;
+в репозитории — для совместимости (см. Third-party data notice в LICENSE).

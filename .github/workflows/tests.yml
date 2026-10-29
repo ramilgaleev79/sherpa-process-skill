@@ -1,0 +1,32 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Зависимости тестов
+        run: pip install pytest pyyaml
+      - name: Юнит-тесты (включая eval-пары)
+        run: python -m pytest tests/unit -q
+      - name: Инсталлятор (smoke)
+        run: python scripts/install_skill.py --dry-run
+      - name: Секреты в golden/эталонах (P0 быть не должно)
+        run: python scripts/lint_process.py golden/real/*.process golden/project/*.process --fail-on p0 --limit 0
+      - name: Корпоративные идентификаторы отсутствуют
+        run: >
+          ! grep -riniE "delrus|дельрус" --include="*.py" --include="*.md"
+          --include="*.yaml" --include="*.json" --include="*.sch"
+          --exclude-dir=.git .
