@@ -12,9 +12,9 @@ profiles:
       - FATAL        # структурный развал (SHP-DOC-*, SHP-ID-*)
       - ERROR         # нарушенные инварианты (SEM-*)
     warns_only:
-      - unresolved_external_variable
-      - while_body_no_state_change
-      - layout_off_grid
+      - unresolved_todo                 # SHP-TODO-001: в draft только WARN
+      - variable_undeclared             # SEM-REF-001: в draft только WARN
+      - implicit_truthiness             # SEM-EXPR-010: в draft только WARN
 
   release:
     purpose: только подтверждённые и валидные конструкции; файл готов для Designer
@@ -25,27 +25,54 @@ profiles:
       - WARN_DETERMINISM
     forbidden:
       - unresolved_todo                  # SHP-TODO-001: ToDo в release запрещён
-      - unconfirmed_collection_block     # Hashtable*-блоки без golden (см. tests GOLDEN_MISSING)
       - variable_undeclared              # SEM-REF-001: ссылки только на объявленные/external переменные
       - implicit_truthiness              # SEM-EXPR-010: условие не-Logical без явного сравнения
+      - unconnected_branch               # SHP-GRF-020: Yes/No, Iteration/Next, Index/Next, Row/Item/Next, Next/Out/Error контейнеров
+      - forloop_index_type               # SEM-TYPE-002: переменная цикла For обязана быть Number
+      - for_bounds                       # SHP-GRF-021: For без end_index или step=0
     # empty_while_condition и unknown_block_version не входят в runtime-правила:
     # пустое While-условие исключено контрактом IR (condition обязателен),
-    # неизвестная версия блока невозможна (компилятор использует только golden-шаблоны)
+    # неизвестная версия блока невозможна (компилятор использует только шаблоны каталога)
 
   strict:
     purpose: release + типовая строгость выражений
-    inherits: release
-    forbidden:
+    inherits: release                    # рантайм-гарантия: profiles.py строит strict = release ∪ strict-only
+    forbidden:                           # (только strict-добавки; release-коды наследуются)
       - untyped_expression_in_condition  # условие должно быть compare/logical/variable_reference(Logical)
       - ambiguous_type_coercion          # Number->Text и т.п. без явного подтверждения
-      - freeform_powershell              # kind=powershell запрещён; только типизированные выражения
+      - freeform_powershell              # kind=powershell на любом уровне AST запрещён
+      - invoke_expression                # SEM-EXPR-013: узел InvokeExpression (произвольный PS) запрещён
+      - raw_property_grammar             # SEM-PROP-002: грамматика raw-свойств по @Type шаблона
+
+# Всегда блокирующие (ERROR во всех профилях, вне forbidden-механизма):
+#   SHP-BLK-010 unconfirmed_collection_block — блок отсутствует в шаблонах каталога (не компилируется)
+#   SHP-PROP-001 typed_field_override — raw-свойство перекрывает типизированное поле IR
+#   SHP-PROP-002 unknown_property     — свойства вне шаблона блока (при переданных templates)
+#   SHP-PROP-003 bad_property_value   — значение properties не является строкой
+#   SHP-PORT-001 unknown_port         — порта нет у блока в каталоге (MaxIn/MaxOut + имена из шаблона)
+#   SHP-PORT-002 port_fan_out/fan_in  — превышен MaxOutConnections/MaxInConnections каталога
+#   SEM-VAR-010 dictionary_variable   — Dictionary-переменные не генерируются (нет golden-контейнера)
+#   SEM-VAR-011 nonempty_secure_string — SecureString в декларации только пустой (компилятор иначе не соберёт)
+#   SHP-VAR-007 invented_variable_type — @Type вне 11 типов каталога (.process-слой)
+#   SHP-VAR-009/010, SHP-ID-006..008, SHP-DOC-002..005 — структурные (.process-слой);
+#   арность портов описана выше (port_fan_out/fan_in).
+#   SHP-DOC-005 unknown_block — InternalName отсутствует в block_index.json
+
+# Правила генерации с машинной проверкой (validator.py, IR-слой).
+# Всегда WARN: эвристика подсвечивает, но не блокирует выпуск — легальными бывают
+# и URL из задачи, и длинное действие в ToDo. Место в отчёте — SHP-GEN-*.
+#   SHP-GEN-001 redundant_property      — свойство задано пустым/дефолтным значением (правило 4)
+#   SHP-GEN-002 todo_action_quality     — unresolved_action длиннее 60 символов или про реализацию (правило 3)
+#   SHP-GEN-003 invented_infrastructure — значение похоже на выдуманный адрес/домен/путь (правило 7)
+#   SHP-GEN-004 secret_in_ir            — значение похоже на секрет (правило 7)
 
 severity:
   FATAL: документ не может быть проверен дальше; выпуск запрещён
   ERROR: нарушен инвариант процесса; выпуск запрещён
-  WARN: допустимо, но подозрительно; в release блокирует (кроме warns_only draft)
+  WARN: допустимо, но подозрительно; блокирует только если правило входит в forbidden профиля
 
-# Объединение отчётов (D3): release-профиль склеивает Python-валидатор (SEM-*) и SVRL (SHP-*) в один JSON.
+# Формат отчёта build (runtime): поля машинного отчёта; источник один — Python-валидатор
+# (SVRL/Schematron — dev-аудит, в runtime-отчёт не попадает).
 report_format:
-  fields: [code, severity, location, message]
-  sources: [python, svrl]
+  fields: [code, severity, location, message, rule]
+  sources: [python]

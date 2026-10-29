@@ -1,7 +1,14 @@
+> **Обновление 2026-10-20.** Каталог больше не собирается из golden: он снимается
+> с установленного Designer (`scripts/dev/harvest_catalog.py`, 752 блока).
+> Каталог `patterns/` и генераторы `gen_catalog.py` / `extract_templates.py` /
+> `ingest_block.py` удалены — граф строится из задачи по `references/graph-synthesis.md`.
+> Разделы ниже — исторический план и статус фаз; актуальная архитектура — в `SKILL.md`.
+
 # План разработки скила sherpa-process
 
 Version: 1.1-draft (2026-10-15) — ревизия с учётом существующего `sherpa-rules.sch`
-Статус фаз на 2026-10-16: **0–6 завершены** (коммиты fa834b9…8c12ebd; 51 тест).
+Статус фаз на 2026-10-23: **0–6 и 8 завершены** (коммиты fa834b9…, 180 тестов).
+Фаза 8 (ревью, применение спецификации, eval-пары) добавлена по внешнему ревью 23.10.2026.
 Открыто: фаза 7 — тестовые промпты и внешняя приёмка в Designer 1.4.4 (D8).
 Входные документы: `main.md` (мастер-контекст v0.3-draft), `Правила Schematron для генератора процессов Sherpa RPA.md`, `sherpa-rules.sch` (единая структурная схема с реальными XPath Sherpa).
 Статус окружения: Windows, Python 3.14.3 (stdlib only).
@@ -54,6 +61,7 @@ Sherpa_skill/                        # корень скила (репо)
 │   └── schematron-rules.md          # каталог SHP-* / SEM-*: контексты, роли, диагностика
 ├── scripts/
 │   ├── cli.py                       # init-ir | build | validate | inspect | check-determinism
+│   ├── golden_inspector.py          # дамп .process: Base64 → контейнер → побайтовый разбор (runtime, stdlib)
 │   ├── sherpa_xml/                  # pure-stdlib пакет (§5 main.md)
 │   │   ├── ir.py                    # dataclasses IR + load/dump JSON + проверка схемы IR
 │   │   ├── identifiers.py           # uuid5(NAMESPACE_PROCESS, "process::node-key::Type")
@@ -71,7 +79,6 @@ Sherpa_skill/                        # корень скила (репо)
 │   │       ├── collections.py       # Hashtable/Dictionary/List (List initial serializer — после golden)
 │   │       └── data_table.py        # schema + DiffGram + контейнер
 │   └── dev/                         # dev-инструменты (могут требовать saxonche/pyyaml, только для разработки)
-│       ├── golden_inspector.py      # дамп .process: Base64 → контейнер → побайтовый разбор
 │       ├── golden_diff.py           # diff двух .process (см. «описание единственного изменения»)
 │       ├── run_schematron.py        # SaxonC: .sch (фаза) → SVRL → нормализованный JSON-отчёт
 │       └── consistency_check.py     # каталоги (block-catalog) ↔ .sch: InternalName, версии, обязательные свойства
@@ -229,6 +236,162 @@ Sherpa_skill/                        # корень скила (репо)
 Выход: скил обнаруживается ZCode, полный сценарий проходит по CLI.
 
 Критерий: свежая сессия с установленным скилом проходит end-to-end сценарий без ручных правок XML.
+
+### Фаза 6a — Runtime-упаковка скилла (сделано 16.10.2026)
+
+Установленная копия — только рантайм (white-list через `scripts/install_skill.py`):
+CLI, инспектор, `sherpa_xml`, шаблоны блоков, справочники, паттерны, `.sch`,
+`golden/manifest.yaml` (~0,9 МБ вместо копии репозитория 4,6 МБ). `main.md` заморожен
+как исторический дизайн-док и больше не упоминается в SKILL.md. `golden_inspector.py`
+перенесён из `scripts/dev/` в `scripts/` — рантайм-инструмент (stdlib, без venv).
+
+### Фаза 6b — Компактизация block-catalog.yaml (сделано 16.10.2026)
+
+`gen_catalog.py` генерирует компактный индекс: порты/версии/Type/ValueType
+и только непустые DefaultValue; компактные узлы — flow-стилем в одну строку.
+caption/enum_variants/is_required/RelativePosition не выносятся (они видны
+в golden и assets/block_templates.json). 3932 → 1000 строк, 104 → 52 КБ;
+генерация байт-стабильна, test_catalog_sync зелёный.
+
+### Фаза 6c — Демоушен Schematron (сделано 16.10.2026)
+
+Норматив правил валидации — один: `validator.py` (Python, рантайм, без зависимостей).
+Schematron (`schemas/sherpa-rules.sch`) понижен до dev-аудита: прогон опционален
+при ingest нового golden, обязанность параллельной поддержки правил правило-в-правило
+отменена. Из установленной копии скилла `.sch` не ставится, ссылка из SKILL.md убрана.
+
+### Фаза 6d — Последний рубеж и дисциплина IR (сделано 18.10.2026)
+
+Достройка до намерения архитектуры (по ревью соответствия):
+1. **Пост-валидация в build**: `validate_process_bytes` гоняется по байтам
+   сгенерированного XML до записи; провал = файл не выпускается. Schematron —
+   по-прежнему только dev/CI.
+2. **PowerShell-лазейка закрыта**: SHP-PROP-001 (ERROR во всех профилях) — raw-свойство
+   не может перекрыть типизированное поле (Condition/VariableN/ExpressionN/StartIndex/
+   Step/Index/Expression1); InvokeExpression получил типизированный путь `expression`
+   (raw-перекрытие Expression1 запрещено), в strict узел запрещён целиком (SEM-EXPR-013);
+   SEM-EXPR-012 теперь покрывает и initial переменных, и границы ForLoop
+   (draft/release — WARN, strict — ERROR).
+3. **Артефакты**: `build` всегда пишет `OUT.report.json` (статус, issues обоих слоёв,
+   sha256, детерминизм) и `OUT.todo.json` при наличии ToDo — реестр собирается из узлов;
+   поле `unresolved_actions` в IR устарело (принимается, игнорируется);
+   `validate-ir` получил `--report`.
+4. **Типизация**: реализованы реальные сверки — SEM-TYPE-002 (переменная цикла For
+   должна быть Number), SHP-VAR-007 (@Type в .process обязан быть из 8 подтверждённых
+   типов); формулировка трёхуровневой модели в README приведена к факту
+   (документированная модель + статические сверки, без вывода runtime из ValueType).
+
+### Фаза 6e — strict/release как гарантия (сделано 18.10.2026, по внешнему ревью)
+
+P0 (критические дыры):
+1. **Вложенный PowerShell**: SEM-EXPR-012 обходит всё поддерево AST (_walk_expr),
+   powershell запрещён в strict на любом уровне (compare/arithmetic-операнды).
+2. **Raw-свойства в strict**: SEM-PROP-002 — значение обязано быть простым
+   операндом ($var / литерал / число / $True|$False); произвольный код в
+   Delay.Time и т.п. больше не проходит strict.
+3. **Полнота ветвления**: SHP-GRF-020 — обязательные выходы Yes/No (Condition),
+   Iteration/Next (WhileLoop), Index/Next (ForLoop); draft WARN, release ERROR.
+4. **Пост-валидация расширена** (бывший consistency-check): уникальность ID
+   (SHP-ID-006), парсинг Content (SHP-DOC-002), коннекторы против портов блоков
+   (SHP-ID-007/008), DefaultValue/Value (SHP-VAR-009), пустой SecureString
+   (SHP-VAR-010), перехват UnicodeDecodeError (bad_encoding).
+
+P1: 5. validate-ir сверяется с build: SHP-PROP-002 (свойство вне шаблона) и
+точная SHP-BLK-010 при переданных templates (cli грузит и передаёт);
+SEM-VAR-010 — Dictionary с initial ошибка контракта. 6. SEM-TYPE-002 — ERROR
+в release/strict (forloop_index_type в forbidden). 7. Обратная синхронизация
+каталога: тест фиксирует Log как единственный блок без логического имени и
+Hashtable* как единственные NODE_TYPES без шаблонов. 8. Доки приведены к факту:
+README (strict-грамматика raw-свойств, отчёт при провале, .sch не ставится),
+validation-profiles.yaml (sources: [python]), .sch: IfElse v23 → IfCondition v46.
+Плюс P2.9: branches/body/next — мёртвые поля (SHP-IR-001 WARN), branches убран
+из init-ir шаблона. Тесты: 75 passed.
+
+### Фаза 6f — strict = release + type-aware грамматика (сделано 19.10.2026, по второму ревью)
+
+P0: 1. **strict структурно надмножество release**: profiles.py собирает strict
+объединением release ∪ strict-only; тест фиксирует включение; strict-тесты на
+SHP-GRF-020/SEM-TYPE-002 (раньше strict пропускал release-ошибки — оба правила
+были только в release-списке). 2. **Raw-грамматика type-aware**: спек свойств
+(@Type, EnumVariants) парсится из golden-шаблона — Enum → вариант из EnumVariants
+(Secs/Direction), Bool → ""|True|False, Expression/Variable → простой операнд;
+валидные enum/bool больше не блокируются, произвольный код — блокируется.
+P1: 3. Пост-валидация: Value проверяется наравне с DefaultValue (оба контейнера,
+Logical, SecureString — оба пустые). 4. Коннекторы — по направлению: Source —
+порт с max_out>0, Sink — с max_in>0 (SHP-ID-007/008). 5. SHP-PROP-003 —
+значение properties обязано быть строкой. 6. failed-отчёт пишется и при
+compile/determinism-ошибках (stage: validate|compile|determinism|parse_ir).
+7. Ложный зелёный убран: Dictionary-переменные — ERROR всегда (SEM-VAR-010),
+SHP-BLK-010 (нет шаблона) — ERROR во всех профилях. 8. InternalName/Version
+в Content (SHP-DOC-003/004). Тесты: 83 passed.
+
+### Фаза 8 — Ревью, применение спецификации и eval-пары (сделано 23.10.2026, по внешнему ревью)
+
+Пробел был в равномерности: генерация и правка оформлены протоколами, ревью —
+нет; а в реальном ревью OCR-проекта модель написала под задачу 8 скриптов
+(`.review/lint.py`, `patch.py`, `verify.py`, `graph.py`…). По принципу skill-creator
+такой скрипт переносится в `scripts/`, а не превращается в новый текстовый
+раздел.
+
+P1 — ревью как сценарий:
+1. `scripts/lint_process.py` (рантайм, stdlib): P0 — секреты (пароль блока,
+   `Bearer`, `gsk_`, hex ≥32, `token=` в URL), дубли ID, висячие связи;
+   P1 — обрывы потока, `ErrorLevel=Handle` без выхода `Error`, блоки вне каталога,
+   `http://`; P2 — выключенные блоки, мёртвый код, копипаста подписей,
+   интерактивные блоки, legacy-версии, необъявленные переменные. Сводка по
+   структуре + `--json` + `--fail-on`.
+2. `references/reviewing-a-process.md` — чек-лист (секреты, GOTO-эквиваленты,
+   обрывы, PS-эмуляция, контракт робота, гигиена), порядок и шаблон отчёта.
+3. Секция «Ревью чужого сценария» в SKILL.md (маршрут, 15 строк).
+
+P2 — последний ручной шаг правки закрыт:
+4. `scripts/edit_spec.py` — общий контракт спецификации (`clone_of`, `place`,
+   `display`, `description`); `change_impact.py` переведён на него.
+5. `scripts/apply_spec.py` — запись спецификации: клоны родных блоков файла
+   (`Code`/`Version`/порты), BOM и переводы строк исходника, детерминированная
+   позиция (шаги `layout.py`), обязательный бэкап, самопроверка до записи
+   (дифф = спека, пост-валидация без новых ERROR), `--dry-run`.
+6. `process_diff.py --expect spec.json` — доказательство «дифф совпал со
+   спецификацией один в один» (связи удалённого блока — следствие).
+
+P3 — правила генерации и корпус:
+7. `SHP-GEN-001` (свойство = пустое/дефолт), `SHP-GEN-002` (ToDo — реализация,
+   а не действие), `SHP-GEN-003` (выдуманная инфраструктура), `SHP-GEN-004`
+   (секрет в значении). Всегда WARN: эвристика не блокирует легальные случаи.
+8. `assets/verb_block_index.json` (168 процессов, 2596 блоков, 32 глагола) +
+   `scripts/dev/build_verb_index.py` (пересборка) + `scripts/block_suggest.py`
+   (кандидаты с частотами, блоки вне каталога помечаются). Шаг 3 синтеза графа
+   теперь опирается на корпус, а не на grep по 752 блокам.
+9. `plan_to_ir.py`: `on_error` у `action` — выход `Error` блока ведёт в свои шаги
+   (graph-synthesis, шаг 5, раньше был невыразим в плане).
+
+P4 — eval-пары (качество проверяется числом):
+10. `tests/fixtures/evals/` — три пары «задача → план → эталон»:
+    `best-screenshots` (артефакт Designer, порог score 0.8 + точное совпадение
+    типов), `screenshots5` (замороженная release-сборка, 1.0), `ocr-skeleton`
+    (верхний уровень реального `OCR/main.process`, type_score 0.8 / score 0.5).
+    Пайплайн: `plan_to_ir` → `cli build` → `graph_compare`; харнес — `tests/evals.py`.
+11. `scripts/dev/extract_skeleton.py` — срез верхнего уровня процесса → профиль
+    графа (эталон без копирования 5 МБ), `graph_compare --profile-out` — экспорт
+    профиля эталона.
+
+Итог: 124 → 194 теста; SKILL.md 261 → 303 строки (рост — за счёт маршрута ревью,
+не новых текстовых правил). Проверено на реальном проекте: линт находит ровно те
+находки, что были получены руками (3 секрета, 6 недостижимых блоков, 8
+выключенных, 174 неуникальные подписи, 2 интерактивных блока) — зафиксировано
+`tests/unit/test_review_ocr.py`.
+
+Саморевью фазы 8 (23.10.2026) нашло и закрыло 9 дефектов: сообщения `SHP-GEN-004`
+и `LNT-SEC-002` печатали значение секрета (теперь только класс/маска); `apply_spec`
+и `process_diff` печатали секретные значения в отчётах (маска «секрет скрыт»);
+`process_diff --expect` не проверял свойства новых блоков (дыра в доказательстве —
+закрыта полем `props` в диффе); `set_props` на блок, добавленный той же
+спецификацией, проходил схему и падал `KeyError` (теперь отказ с указанием на
+`add_blocks.props`); `lint` падал трейсбеком на битом файле (теперь код 2 и
+сообщение); дубли `remove_edges`/`add_edges` давали «правки пересекаются» (теперь
+внятный отказ); `SEM-VAR-011` — непустой SecureString виден до сборки, а не как
+compile-ошибка; при сбое записи оставался `.new`-файл (теперь убирается);
+замороженная сборка в eval и запись `apply_spec` проверены на детерминизм.
 
 ### Фаза 7 — Оценка и итерация (непрерывно, ~2–3 дня начального цикла)
 

@@ -12,3 +12,15 @@ svrl/
 # ОС/редакторы
 Thumbs.db
 .DS_Store
+
+# pytest temp dirs
+pytest-of-*/
+_pytest_tmp/
+
+# Локальные материалы ревью и проект-пример: в них секреты в открытом виде
+# (SMTP-пароль, токены DaData/Groq), сборки .robot и чужие бэкапы. В репозиторий
+# они не попадают; тест tests/unit/test_review_ocr.py пропускается, если их нет.
+OCR/
+.review/
+OCR_review.md
+

@@ -2,8 +2,9 @@
 
 Скил ZCode: детерминированная генерация `.process` XML для **Sherpa RPA Designer 1.4.4**
 из промежуточного представления (IR, JSON), с двухслойной валидацией и профилями
-draft/release/strict. Политика confirmed-over-invented: каждый блок, тип и формат
-сериализации подтверждён golden-эталоном (24 реальных файла Designer).
+draft/release/strict. Политика confirmed-over-invented: 50 блоков подтверждены
+golden-эталонами (22 диаграммы + файл проекта Designer), остальные — каталогом
+продукта и replay-тестом корпуса; типы и форматы сериализации подтверждены golden.
 
 ## Быстрый старт
 
@@ -19,13 +20,50 @@ python scripts/cli.py build example.ir.json example.process --mode release
 Требования: Python 3.10+, стандартная библиотека. Разработка/инструменты —
 `.venv` (`python -m venv .venv && .venv/Scripts/pip install saxonche pyyaml pytest`).
 
+## Установка скила (runtime-копия)
+
+```bash
+python scripts/install_skill.py             # -> ~/.agents/skills/sherpa-process
+python scripts/install_skill.py --force     # перезаписать цель без маркера sherpa-process
+```
+
+Ставится только рантайм по white-list (CLI, инспектор, `sherpa_xml`, шаблоны
+блоков, справочники, `golden/manifest.yaml`) — ~8.5 МБ. Если цель существует и
+в её `SKILL.md` нет маркера `name: sherpa-process`, установщик откажется
+удалять каталог без `--force`.
+Golden-файлы, `scripts/dev/`, `schemas/` и доки репозитория остаются в репозитории.
+
 ## Команды CLI
 
 | Команда | Назначение |
 |---|---|
 | `init-ir FILE` | шаблонный IR со всеми основными узлами |
-| `validate-ir FILE [--profile …]` | проверка IR: контракт + SEM-*/SHP-* правила |
-| `build IR OUT [--mode draft\|release\|strict]` | сборка .process: валидация профиля, компиляция, детерминизм-чек |
+| `validate-ir FILE [--profile …] [--report …]` | проверка IR: контракт + SEM-*/SHP-*/SHP-GEN-* правила; машинный отчёт JSON |
+| `build IR OUT [--mode draft\|release\|strict]` | сборка: валидация профиля → компиляция → **пост-валидация XML** → детерминизм-чек; артефакты `OUT`, `OUT.report.json` (в т.ч. при провале), `OUT.todo.json` (при ToDo) |
+
+## Инструменты (рантайм, stdlib)
+
+| Инструмент | Назначение |
+|---|---|
+| `scripts/lint_process.py FILE` | линт чужого `.process`: P0/P1/P2 — секреты, дубли ID, висячие связи, обрывы, выключенные блоки, мёртвый код, блоки вне каталога, версии. Он же — `cli.py lint-process FILE` |
+| `scripts/structure_audit.py FILE` | GOTO-аудит: классы стрелок, GOTO назад/наружу/вглубь, хабы, глубина, горячие переменные |
+| `scripts/golden_inspector.py FILE --deep` | дамп блока: свойства, порты, Base64-контейнеры |
+| `scripts/change_impact.py FILE --spec spec.json` | радиус правки по спецификации (до записи): структура, хабы, данные, вердикт |
+| `scripts/apply_spec.py FILE --spec spec.json --backup` | запись правки по спецификации: клоны родных блоков, BOM/CRLF, самопроверка до записи |
+| `scripts/process_diff.py OLD NEW [--expect spec.json]` | что реально изменилось; `--expect` — дифф обязан совпасть со спецификацией |
+| `scripts/block_suggest.py "отправить письмо"` | кандидаты блоков по глаголу задачи (корпусный индекс `assets/verb_block_index.json`) |
+
+Один контракт на три инструмента правки — `scripts/edit_spec.py`: «что считали»
+(`change_impact`), «что записали» (`apply_spec`) и «что доказали» (`process_diff
+--expect`) не могут разойтись.
+
+## Ревью и правка чужого сценария
+
+- Ревью: `lint_process` → `structure_audit` → `golden_inspector` для спорных блоков →
+  смысл глазами. Чек-лист и шаблон отчёта — `references/reviewing-a-process.md`.
+- Правка: `structure_audit` (до) → `change_impact` (радиус) → `apply_spec` (запись) →
+  `process_diff --expect` (доказательство). Детали — `references/editing-existing-process.md`.
+
 
 ## Архитектура
 
@@ -45,35 +83,70 @@ IR (JSON, агент) ──validate_ir──► отчёт (код/серьёз
 - **Сериализаторы** (`types/`): Text (Base64-контейнер с 22-байтовым PREFIX),
   List/Hashtable (BinaryFormatter-подобные), DataTable (xs:schema+DiffGram) —
   все round-trip побайтово против golden (тесты).
-- **Валидатор** (`validator.py`) — Python-слой (D3): граф, типы, выражения,
-  контейнеры. Schematron (`schemas/sherpa-rules.sch`) — декларативная спецификация;
-  прогон через SaxonC: `scripts/dev/run_schematron.py FILE --phase strict`.
-- **Паттерны** (`patterns/`) — эталонные multi-block решения (retry, счётчик).
-- **Конвейер расширения**: `scripts/dev/ingest_block.py` (новый блок из .process),
-  `scripts/dev/extract_pattern.py` (новый паттерн из .process),
-  `scripts/dev/golden_inspector.py` (разбор чужого файла).
+- **Валидатор** (`validator.py`) — Python-слой, норматив: граф (обязательные
+  ветки Condition/While/For/Foreach и контейнеров — SHP-GRF-020; границы For —
+  SHP-GRF-021), типы, выражения (powershell запрещён
+  в strict на любом уровне AST), контейнеры, raw-перекрытия типизированных полей
+  (SHP-PROP-001 — всегда ERROR), свойства вне golden-шаблона (SHP-PROP-002).
+  Блок без golden-шаблона — ERROR во всех профилях (SHP-BLK-010, build невозможен).
+  Пост-валидация сгенерированного XML встроена в `build` (последний рубеж):
+  уникальность ID, парсинг Content, InternalName (членство в каталоге)/Version,
+  коннекторы против портов и направлений блоков, арность max_in/max_out,
+  DefaultValue И Value, пустой SecureString, UTF-8.
+  Schematron (`schemas/sherpa-rules.sch`) — dev-аудит без обязательной синхронизации
+  с Python; опциональный перекрёстный прогон при ingest нового golden:
+  `scripts/dev/run_schematron.py FILE --phase strict` (SaxonC).
+- **Профили**: strict структурно надмножество release (`profiles.py` собирает его
+  объединением; тест фиксирует). Dictionary-переменные не генерируются (SEM-VAR-010).
+  Raw `properties` в strict — грамматика по @Type шаблона: Enum — вариант из
+  EnumVariants, Bool — True/False, Expression/Variable — простой операнд (SEM-PROP-002);
+  InvokeExpression в strict запрещён.
+- **Синтез графа** (`references/graph-synthesis.md`) — как строить процесс из задачи;
+  готовых процессов-заготовок нет: каталог `patterns/` удалён 2026-10-20.
+- **Правила генерации с машинной проверкой** (`SHP-GEN-*`, всегда WARN): свойство,
+  равное дефолту шаблона; длинный `unresolved_action` (ToDo = действие); выдуманная
+  инфраструктура в значении; секрет в значении. Правило без проверки перестаёт
+  различать случаи, поэтому три из восьми правил проверяются до сборки.
+- **Корпусный индекс** `assets/verb_block_index.json` (глагол → блок по реальным
+  процессам, `scripts/dev/build_verb_index.py`) и `scripts/block_suggest.py` —
+  кандидаты блоков на шаге 3 синтеза графа.
+- **Eval-пары** (`tests/fixtures/evals/`): задача → план → IR → build →
+  `graph_compare` против эталона (артефакт Designer, замороженная сборка, верхний
+  уровень реального проекта OCR). Правка правил или компилятора проверяется числом:
+  `tests/unit/test_evals.py`.
+- **Инспектор** (`scripts/golden_inspector.py`, только stdlib) — рантайм-инструмент:
+  разбор чужого `.process` (структура, Base64-контейнеры, побайтовый разбор `--deep`).
+- **Обслуживание библиотеки** (репозиторий скила, venv): `scripts/dev/harvest_catalog.py`
+  (снять 752 блока с установленного Designer), `scripts/dev/replay_corpus.py` (прогон по корпусу).
+  Генераторов паттернов и старых конвертеров (`gen_catalog`, `extract_templates`, `ingest_block`) нет.
 
 ## Структура
 
 ```text
-SKILL.md            инструкции агента          main.md   канонический контекст
+SKILL.md            инструкции агента          main.md   исторический дизайн-док
 PLAN.md             план и статус фаз          references/  каталоги + форматы
-scripts/            cli.py + sherpa_xml/ (ядро stdlib) + dev/ (инструменты, venv)
-assets/             golden-шаблоны блоков      patterns/  эталонные конструкции
-schemas/            sherpa-rules.sch           golden/    эталоны + manifest.yaml
-tests/              pytest (51 тест)
+scripts/            cli.py + sherpa_xml/ (рантайм, stdlib) + файловые инструменты:
+                    lint_process.py, structure_audit.py, golden_inspector.py,
+                    change_impact.py, apply_spec.py, edit_spec.py, process_diff.py,
+                    block_suggest.py; dev/ — инструменты репо (venv); install_skill.py
+assets/             golden-шаблоны блоков + block_index + verb_block_index
+schemas/            sherpa-rules.sch (dev-аудит)  golden/ эталоны + manifest.yaml
+tests/              pytest; fixtures/evals/ — пары «задача → план → эталон»
 ```
 
 ## Разработка
 
 ```bash
-.venv/Scripts/python.exe -m pytest tests/unit -q     # все тесты
-.venv/Scripts/python.exe scripts/dev/gen_catalog.py  # каталоги из golden
-.venv/Scripts/python.exe scripts/dev/extract_templates.py  # шаблоны из golden
+.venv/Scripts/python.exe -m pytest tests/unit -q          # все тесты (включая eval-пары)
+.venv/Scripts/python.exe scripts/dev/harvest_catalog.py      # библиотека из установленного Designer
+.venv/Scripts/python.exe scripts/dev/harvest_catalog.py --check   # 752/752, из них 50 golden
+.venv/Scripts/python.exe scripts/dev/replay_corpus.py         # прогон по корпусу .process
+.venv/Scripts/python.exe scripts/dev/build_verb_index.py      # пересборка корпусного индекса глаголов
 ```
 
 ## Ограничения (честно)
 
-- Dictionary-начальные значения не генерируются (контейнер не подтверждён golden).
-- Hashtable*-блоки операций ждут golden-образца (release их блокирует).
+- Dictionary-переменные не генерируются (контейнер не подтверждён golden; SEM-VAR-010).
+- Hashtable*-блоки операций собираются из каталожных шаблонов; их значения проверяются
+  по шаблону, но отдельного golden-образца операций нет.
 - Привязка к Designer 1.4.4; для других версий — новая golden-серия.

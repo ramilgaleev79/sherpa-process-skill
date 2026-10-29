@@ -1,6 +1,10 @@
 meta:
-  designer_version: 1.4.4
-  generated_from: golden/real/*.process
+  designer_version: "1.4.4"
+  sources:
+  - golden/real/*.process (22 диаграммы — базовые 50 блоков)
+  - Designer/ExternalToolboxes/Toolboxes-ru.json (746 блоков палитры)
+  - Designer/Settings/settings.json → PropertyTypes (11 типов)
+  - корпус *.process установки (replay: 208 файлов, наблюдаемые значения)
 variable_types:
   DataTable:
     observed_in:
@@ -14,6 +18,7 @@ variable_types:
     - b07-collections-filled.process
     - diag07-hashtable-dict-vars.process
     runtime: System.Collections.Generic.Dictionary`2[[System.Object],[System.Object]]
+    generator: запрещён (SEM-VAR-010) — контейнер не подтверждён golden
   Hashtable:
     observed_in:
     - b07-collections-filled.process
@@ -50,4 +55,21 @@ variable_types:
     - b05-text-variants.process
     - best-screenshots-mail-save.process
     - diag03-assign-4vars.process
-    runtime: бинарный контейнер Base64 (см. references/text-serialization.md)
+    runtime: бинарный контейнер Base64 (references/text-serialization.md);
+      непустые значения — всегда в контейнере (126/126 в текущем корпусе;
+      ранее 260/260 на 211 файлах)
+  DateTime:
+    observed_in:
+    - corpus: DiagramProperty Type=DateTime (4 значения в 211 *.process)
+    declaration: '05.06.2023 18:48:20 — плоская строка, без Base64'
+    generator: initial — datetime_literal (dd.MM.yyyy HH:mm:ss); пусто — ""
+  Object:
+    observed_in:
+    - corpus: DiagramProperty Type=Object (4 значения в текущем replay, все пустые)
+    - частый приёмник строк ForeachRows (Row) и результатов InvokeExpression
+    generator: объявляется только пустой (""); значение задаётся блоками/Assign
+  Money:
+    observed_in:
+    - Designer/Settings/settings.json → PropertyTypes (объявлен продуктом)
+    - в корпусе примеров не встречается
+    generator: объявляется только пустой (""); непустое initial не подтверждено

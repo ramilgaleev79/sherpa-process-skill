@@ -1,6 +1,6 @@
 # Сериализация DataTable в .process (подтверждено golden)
 
-Источник истины: `golden/real/b11-datatables-x3.process` (пустая таблица / schema-only / схема+строки), дополнительно `b10-datatable-ops.process`, `diag11-log174-datatable.process`, `main-rich.process`.
+Источник истины: `golden/real/b11-datatables-x3.process` (пустая таблица / schema-only / схема+строки), дополнительно `b10-datatable-ops.process` и `diag11-log174-datatable.process`.
 
 ## Модель контейнера
 
@@ -84,5 +84,7 @@ single-sample риски (capacity List, Version/HashSize Hashtable) помеч�
 
 ## Осталось
 
-- Значения ячеек: форматы дат (ISO 8601 + offset), Guid (канонический), Boolean, экранирование XML в строках (билдеры принимают значения как есть; типизация значений — фаза 4/5).
+- Значения ячеек: форматы дат (ISO 8601 + offset), Guid (канонический), Boolean;
+  значения принимаются строками и экранируются XML-билдером, типизация значений — фаза 4/5.
+  `null` запрещён: DBNull кодируется отсутствием ключа.
 - Вложенные Hashtable/DataTable в ячейках — не подтверждено (за пределами MVP, §14.9).
